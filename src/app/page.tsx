@@ -6,7 +6,7 @@ export default function Home() {
           <span className="text-sm font-semibold tracking-tight">Elias</span>
           <nav className="flex items-center gap-4 text-sm text-zinc-600 dark:text-zinc-400">
             <a
-              href="https://github.com"
+              href="https://github.com/cthompson248/elias"
               target="_blank"
               rel="noopener noreferrer"
               className="transition-colors hover:text-foreground"
