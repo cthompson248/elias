@@ -2,13 +2,30 @@
 
 export type ChecklistStatus = "complete" | "clarification" | "pending";
 
-export type ClarificationAnswer =
-  | "none"
-  | "anesthetic"
-  | "antibiotics"
-  | null;
+export type DonorScreeningResponse = "yes" | "no";
 
 export type Outcome = "eligible" | "nurse_review" | "deferred" | null;
+
+export interface QuickOption {
+  id: string;
+  label: string;
+}
+
+export interface FollowUpQuestion {
+  id: string;
+  question: string;
+  quickOptions: QuickOption[];
+}
+
+export interface ScreeningQuestionFlow {
+  section: string;
+  questionNumber: string;
+  question: string;
+  /** Response recorded on the waiting-room tablet */
+  donorResponse: DonorScreeningResponse;
+  flagReason: string;
+  followUps: FollowUpQuestion[];
+}
 
 export interface ChecklistItem {
   id: string;
@@ -65,16 +82,45 @@ export const checklistSections: { title: string; items: ChecklistItem[] }[] = [
   },
 ];
 
-export const activeClarification = {
-  topic: "Recent Dental Work",
-  question:
-    "Was any local anesthetic or antibiotics used during the procedure?",
-  guidance:
-    "The duration of deferral depends on the invasiveness and the use of pharmacological agents.",
-  answerOptions: [
-    { id: "none" as const, label: "None / Routine Cleaning" },
-    { id: "anesthetic" as const, label: "Local Anesthetic Only" },
-    { id: "antibiotics" as const, label: "Antibiotics Prescribed" },
+export const dentalScreeningFlow: ScreeningQuestionFlow = {
+  section: "RECENT PROCEDURES",
+  questionNumber: "Q23",
+  question: "Have you had dental work in the last 7 days?",
+  donorResponse: "yes",
+  flagReason:
+    "Dental procedures may require deferral depending on invasiveness and whether local anesthetic or antibiotics were used. Confirm type and timing with the donor.",
+  followUps: [
+    {
+      id: "procedure-type",
+      question: "What type of procedure was performed and when?",
+      quickOptions: [
+        { id: "cleaning", label: "Routine cleaning, 3 days ago" },
+        { id: "filling", label: "Filling, 3 days ago" },
+        { id: "extraction", label: "Extraction, 3 days ago" },
+        { id: "other", label: "Other — see notes" },
+      ],
+    },
+    {
+      id: "pharmacological",
+      question:
+        "Was any local anesthetic or antibiotics used during the procedure?",
+      quickOptions: [
+        { id: "none", label: "None / routine cleaning only" },
+        { id: "anesthetic", label: "Local anesthetic only" },
+        { id: "antibiotics", label: "Antibiotics prescribed" },
+        { id: "both", label: "Both anesthetic and antibiotics" },
+      ],
+    },
+    {
+      id: "donation-type",
+      question: "Is the donor scheduled for whole blood or platelets today?",
+      quickOptions: [
+        { id: "whole", label: "Whole blood" },
+        { id: "platelets", label: "Platelets" },
+        { id: "plasma", label: "Plasma" },
+        { id: "unknown", label: "Not yet confirmed" },
+      ],
+    },
   ],
 };
 
