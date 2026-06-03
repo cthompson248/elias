@@ -185,7 +185,7 @@ export default function InterviewPage() {
                 : "Eligibility summary view — prototype placeholder."}
             </div>
           ) : activeItemId === "dental" ? (
-            <div className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-white px-8 py-8">
+            <div className="min-h-0 flex-1 overflow-y-auto bg-white px-8 py-8">
               <p className="text-xs font-semibold uppercase tracking-wider text-[#727783]">
                 {dentalScreeningFlow.section} · {dentalScreeningFlow.questionNumber}
               </p>
@@ -209,7 +209,7 @@ export default function InterviewPage() {
                 </div>
               </div>
 
-              {donorResponse === "yes" ? (
+              {donorResponse === "yes" && (
                 <>
                   <div className="mt-6 flex gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
                     <InfoIcon className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" />
@@ -260,22 +260,25 @@ export default function InterviewPage() {
                       ))}
                     </div>
                   </section>
-
-                  <NotesSection
-                    value={notes}
-                    onChange={setNotes}
-                    variant="default"
-                  />
                 </>
-              ) : (
-                <div className="-mx-8 mt-6 flex min-h-0 flex-1 flex-col bg-[#f3f4f5] px-8 py-6">
-                  <NotesSection
-                    value={notes}
-                    onChange={setNotes}
-                    variant="negative"
-                  />
-                </div>
               )}
+
+              <section className="mt-8">
+                <h2 className="text-base font-semibold text-[var(--clinical-on-surface)]">
+                  Notes
+                </h2>
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder={
+                    donorResponse === "no"
+                      ? "Add any additional context for this negative response…"
+                      : "Record any additional observations or verbal clarifications..."
+                  }
+                  rows={5}
+                  className="mt-3 w-full resize-none rounded-xl border border-[var(--clinical-outline)] bg-[var(--clinical-surface)] px-4 py-3 text-sm leading-6 outline-none placeholder:text-[#727783] focus:border-[var(--clinical-primary)] focus:bg-white focus:ring-2 focus:ring-[var(--clinical-primary)]/20"
+                />
+              </section>
             </div>
           ) : (
             <div className="flex flex-1 items-center justify-center p-8 text-sm text-[var(--clinical-on-surface-variant)]">
@@ -348,41 +351,6 @@ export default function InterviewPage() {
   );
 }
 
-function NotesSection({
-  value,
-  onChange,
-  variant,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  variant: "default" | "negative";
-}) {
-  const isNegative = variant === "negative";
-
-  return (
-    <section className={isNegative ? "flex min-h-0 flex-1 flex-col" : "mt-8"}>
-      <h2 className="text-base font-semibold text-[var(--clinical-on-surface)]">
-        Notes
-      </h2>
-      <textarea
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={
-          isNegative
-            ? "Add any additional context for this negative response…"
-            : "Record any additional observations or verbal clarifications..."
-        }
-        rows={isNegative ? 8 : 5}
-        className={`mt-3 w-full resize-none rounded-xl border px-4 py-3 text-sm leading-6 outline-none placeholder:text-[#727783] focus:border-[var(--clinical-primary)] focus:bg-white focus:ring-2 focus:ring-[var(--clinical-primary)]/20 ${
-          isNegative
-            ? "min-h-[200px] flex-1 border-[#e5e7eb] bg-[#eceef0] focus:bg-white"
-            : "border-[var(--clinical-outline)] bg-[var(--clinical-surface)]"
-        }`}
-      />
-    </section>
-  );
-}
-
 function DonorResponseButton({
   label,
   selected,
@@ -402,17 +370,19 @@ function DonorResponseButton({
         selected
           ? variant === "yes"
             ? "border-emerald-500 bg-emerald-50 text-emerald-800"
-            : "border-[var(--clinical-primary)] bg-[#eef4fc] text-[var(--clinical-primary-dark)]"
+            : "border-slate-400 bg-slate-100 text-slate-700"
           : "border-[var(--clinical-outline)] bg-white text-[var(--clinical-on-surface-variant)] hover:border-[#c2c6d4] hover:bg-[var(--clinical-surface)]"
       }`}
       aria-pressed={selected}
     >
-      {selected ? (
-        <CheckIcon className={`h-4 w-4 ${variant === "yes" ? "text-emerald-600" : "text-[var(--clinical-primary)]"}`} />
-      ) : variant === "yes" ? (
-        <ThumbsUpIcon className="h-4 w-4 text-[#c2c6d4]" />
+      {variant === "yes" ? (
+        <ThumbsUpIcon
+          className={`h-4 w-4 ${selected ? "text-emerald-600" : "text-[#c2c6d4]"}`}
+        />
       ) : (
-        <ThumbsDownIcon className="h-4 w-4 text-[#c2c6d4]" />
+        <ThumbsDownIcon
+          className={`h-4 w-4 ${selected ? "text-[#727783]" : "text-[#c2c6d4]"}`}
+        />
       )}
       {label}
     </button>
