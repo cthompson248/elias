@@ -1,15 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
   activeClarification,
   checklistSections,
   clinicalInsight,
-  computeProgress,
   donor,
   interviewHistory,
   linkedProtocols,
-  reviewedBaseline,
   totalQuestions,
   type ClarificationAnswer,
   type Outcome,
@@ -22,22 +20,17 @@ export default function InterviewPage() {
   const [activeItemId, setActiveItemId] = useState("dental");
   const [selectedAnswer, setSelectedAnswer] = useState<ClarificationAnswer>(null);
   const [notes, setNotes] = useState("");
-  const [outcome, setOutcome] = useState<Outcome>(null);
-
-  const progress = useMemo(() => {
-    const bonus = selectedAnswer ? 1 : 0;
-    return computeProgress(reviewedBaseline + bonus, totalQuestions);
-  }, [selectedAnswer]);
+  const [_outcome, setOutcome] = useState<Outcome | null>(null);
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-[var(--clinical-surface)] text-[var(--clinical-on-surface)]">
       {/* Top header */}
-      <header className="flex shrink-0 items-center gap-6 border-b border-[var(--clinical-outline)] bg-white px-6 py-3">
-        <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#dbe4ed] text-sm font-semibold text-[var(--clinical-on-surface-variant)]">
+      <header className="grid shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-4 border-b border-[var(--clinical-outline)] bg-white px-6 py-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#dbe4ed] text-sm font-semibold text-[var(--clinical-on-surface-variant)]">
             MT
           </div>
-          <div className="leading-tight">
+          <div className="min-w-0 leading-tight">
             <p className="font-[family-name:var(--font-public-sans)] text-base font-semibold">
               {donor.name}
             </p>
@@ -45,20 +38,20 @@ export default function InterviewPage() {
               ID: {donor.donorId} · Type: {donor.bloodType}
             </p>
           </div>
+
+          <div className="hidden h-9 w-px bg-[var(--clinical-outline)] sm:block" />
+
+          <div className="hidden text-sm text-[var(--clinical-on-surface-variant)] md:block">
+            <span className="text-xs font-semibold uppercase tracking-wider text-[#727783]">
+              Last Donation
+            </span>
+            <p className="font-medium text-[var(--clinical-on-surface)]">
+              {donor.lastDonation}
+            </p>
+          </div>
         </div>
 
-        <div className="hidden h-9 w-px bg-[var(--clinical-outline)] sm:block" />
-
-        <div className="hidden text-sm text-[var(--clinical-on-surface-variant)] md:block">
-          <span className="text-xs font-semibold uppercase tracking-wider text-[#727783]">
-            Last Donation
-          </span>
-          <p className="font-medium text-[var(--clinical-on-surface)]">
-            {donor.lastDonation}
-          </p>
-        </div>
-
-        <nav className="ml-4 flex items-center gap-6">
+        <nav className="flex items-center justify-center gap-6">
           {(
             [
               { id: "interview" as const, label: "Interview" },
@@ -84,7 +77,7 @@ export default function InterviewPage() {
           ))}
         </nav>
 
-        <div className="ml-auto flex items-center gap-3">
+        <div className="flex items-center justify-end gap-3">
           <button
             type="button"
             className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 transition-colors hover:bg-red-100"
@@ -353,65 +346,6 @@ export default function InterviewPage() {
           </div>
         </aside>
       </div>
-
-      {/* Bottom action bar */}
-      <footer className="flex shrink-0 items-center justify-between gap-6 border-t border-[var(--clinical-outline)] bg-white px-6 py-4">
-        <div className="flex min-w-0 flex-1 items-center gap-4">
-          <span className="shrink-0 text-sm font-medium text-[var(--clinical-on-surface-variant)]">
-            Interview Progress:
-          </span>
-          <div className="flex min-w-0 max-w-md flex-1 items-center gap-3">
-            <div className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-[#e1e3e4]">
-              <div
-                className="h-full rounded-full bg-[var(--clinical-secondary)] transition-all duration-300"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-            <span className="shrink-0 text-sm font-semibold tabular-nums text-[var(--clinical-secondary)]">
-              {progress}%
-            </span>
-          </div>
-        </div>
-
-        <div className="flex shrink-0 flex-wrap items-center justify-end gap-3">
-          <button
-            type="button"
-            onClick={() => setOutcome("nurse_review")}
-            className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-semibold transition-colors ${
-              outcome === "nurse_review"
-                ? "border-amber-300 bg-amber-50 text-amber-800"
-                : "border-[var(--clinical-outline)] bg-white text-[var(--clinical-on-surface)] hover:bg-[var(--clinical-surface)]"
-            }`}
-          >
-            <PersonIcon className="h-4 w-4" />
-            Refer to Nurse Specialist
-          </button>
-          <button
-            type="button"
-            onClick={() => setOutcome("deferred")}
-            className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-semibold transition-colors ${
-              outcome === "deferred"
-                ? "border-red-300 bg-red-100 text-red-800"
-                : "border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
-            }`}
-          >
-            <DeferIcon className="h-4 w-4" />
-            Deferred
-          </button>
-          <button
-            type="button"
-            onClick={() => setOutcome("eligible")}
-            className={`inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition-colors ${
-              outcome === "eligible"
-                ? "bg-[var(--clinical-primary)]"
-                : "bg-[var(--clinical-primary-dark)] hover:bg-[var(--clinical-primary)]"
-            }`}
-          >
-            <CheckIcon className="h-4 w-4" />
-            Eligible to Proceed
-          </button>
-        </div>
-      </footer>
     </div>
   );
 }
@@ -508,23 +442,6 @@ function ExternalLinkIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function PersonIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function DeferIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <circle cx="12" cy="12" r="10" />
-      <path d="M4.93 4.93l14.14 14.14" strokeLinecap="round" />
     </svg>
   );
 }
