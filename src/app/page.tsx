@@ -47,7 +47,7 @@ export default function Home() {
               href="/interview"
               className="inline-flex h-11 items-center justify-center rounded-full bg-foreground px-6 text-sm font-medium text-background transition-opacity hover:opacity-90"
             >
-              Open interview prototype
+              Start donor interview
             </a>
             <a
               href="https://nextjs.org/docs"

@@ -30,6 +30,8 @@ export interface ScreeningQuestionFlow {
 
 export interface InterviewQuestion {
   id: string;
+  /** Short code for nurse selection, e.g. MED-07 */
+  code: string;
   category: string;
   question: string;
   reviewStatus: QuestionReviewStatus;
@@ -53,90 +55,13 @@ export const donor: Donor = {
   lastDonation: "4 months ago",
 };
 
-export const interviewQuestions: InterviewQuestion[] = [
-  {
-    id: "feeling-well",
-    category: "General health",
-    question: "Are you feeling well today?",
-    reviewStatus: "ok",
-    tabletResponse: "yes",
-  },
-  {
-    id: "sleep",
-    category: "General health",
-    question: "Slept at least 5 hours last night?",
-    reviewStatus: "ok",
-    tabletResponse: "yes",
-  },
-  {
-    id: "eaten",
-    category: "General health",
-    question: "Eaten in the last 4 hours?",
-    reviewStatus: "ok",
-    tabletResponse: "yes",
-  },
-  {
-    id: "chronic",
-    category: "Medical history",
-    question: "Diagnosed with any chronic condition?",
-    reviewStatus: "pending",
-    tabletResponse: null,
-  },
-  {
-    id: "tattoos",
-    category: "Lifestyle",
-    question: "New tattoos or piercings in the last 4 months?",
-    reviewStatus: "pending",
-    tabletResponse: null,
-  },
-  {
-    id: "medications",
-    category: "Medications",
-    question: "Taken any medication in the last 14 days?",
-    reviewStatus: "clarify",
-    tabletResponse: "yes",
-    flowKey: "medications",
-  },
-  {
-    id: "travel",
-    category: "Travel",
-    question: "Traveled outside the country in the last 3 years?",
-    reviewStatus: "attention",
-    tabletResponse: "yes",
-  },
-  {
-    id: "sexual",
-    category: "Sexual history",
-    question: "Any new sexual partners in the last 3 months?",
-    reviewStatus: "clarify",
-    tabletResponse: "yes",
-  },
-  {
-    id: "dental",
-    category: "Recent procedures",
-    question: "Surgery or dental work in the last 6 months?",
-    reviewStatus: "clarify",
-    tabletResponse: "yes",
-    flowKey: "dental",
-  },
-  {
-    id: "disclosure",
-    category: "Disclosure",
-    question: "Anything else we should know about your health?",
-    reviewStatus: "attention",
-    tabletResponse: "yes",
-  },
-];
-
 export function filterInterviewQuestions(
   questions: InterviewQuestion[],
   filter: ChecklistFilter
 ): InterviewQuestion[] {
   switch (filter) {
     case "review":
-      return questions.filter(
-        (q) => q.reviewStatus === "clarify" || q.reviewStatus === "attention"
-      );
+      return questions.filter((q) => q.reviewStatus !== "ok");
     case "clear":
       return questions.filter((q) => q.reviewStatus === "ok");
     default:
@@ -146,9 +71,7 @@ export function filterInterviewQuestions(
 
 export function getChecklistCounts(questions: InterviewQuestion[]) {
   return {
-    review: questions.filter(
-      (q) => q.reviewStatus === "clarify" || q.reviewStatus === "attention"
-    ).length,
+    review: questions.filter((q) => q.reviewStatus !== "ok").length,
     clear: questions.filter((q) => q.reviewStatus === "ok").length,
     all: questions.length,
   };
@@ -268,11 +191,8 @@ export const referenceGuidance = [
   },
 ];
 
-export function initialQuestionResponses(): Record<
-  string,
-  DonorScreeningResponse | null
-> {
-  return Object.fromEntries(
-    interviewQuestions.map((q) => [q.id, q.tabletResponse])
-  );
+export function initialQuestionResponses(
+  questions: InterviewQuestion[]
+): Record<string, DonorScreeningResponse | null> {
+  return Object.fromEntries(questions.map((q) => [q.id, q.tabletResponse]));
 }
