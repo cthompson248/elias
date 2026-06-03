@@ -7,7 +7,7 @@ import {
   clinicalInsight,
   donor,
   interviewHistory,
-  linkedProtocols,
+  referenceGuidance,
   totalQuestions,
   type ClarificationAnswer,
   type Outcome,
@@ -324,20 +324,23 @@ export default function InterviewPage() {
             </article>
 
             <section className="mt-6">
-              <div className="mb-3 flex items-center justify-between">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-[#727783]">
-                  Linked Protocols
-                </h3>
-                <ExternalLinkIcon className="h-4 w-4 text-[#727783]" />
-              </div>
-              <ul className="space-y-2">
-                {linkedProtocols.map((protocol) => (
-                  <li key={protocol}>
+              <h3 className="mb-3 text-sm font-medium text-[#727783]">
+                Reference guidance
+              </h3>
+              <ul className="flex flex-col gap-2">
+                {referenceGuidance.map((item) => (
+                  <li key={item.id}>
                     <button
                       type="button"
-                      className="w-full rounded-lg border border-[var(--clinical-outline)] bg-white px-4 py-3 text-left text-sm font-medium text-[var(--clinical-on-surface)] transition-colors hover:border-[var(--clinical-primary)] hover:bg-[#eef4fc]/30"
+                      className="group flex w-full items-center gap-3 rounded-lg border border-[#e5e7eb] bg-white px-3 py-3 text-left transition-colors hover:border-[var(--clinical-outline-variant)] hover:bg-[var(--clinical-surface)]"
                     >
-                      {protocol}
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center text-violet-600">
+                        <BookIcon className="h-5 w-5" />
+                      </span>
+                      <span className="min-w-0 flex-1 text-sm font-medium leading-snug text-[var(--clinical-on-surface)]">
+                        {item.label}
+                      </span>
+                      <ChevronRightIcon className="h-4 w-4 shrink-0 text-[#c2c6d4] transition-colors group-hover:text-[#727783]" />
                     </button>
                   </li>
                 ))}
@@ -438,10 +441,10 @@ function BookIcon({ className }: { className?: string }) {
   );
 }
 
-function ExternalLinkIcon({ className }: { className?: string }) {
+function ChevronRightIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }

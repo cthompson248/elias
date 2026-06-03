@@ -85,9 +85,19 @@ export const clinicalInsight = {
   deferralNote: "72h deferral from procedure date when local anesthetic was used.",
 };
 
-export const linkedProtocols = [
-  "Infectious Disease Protocol",
-  "Surgical Deferrals",
+export const referenceGuidance = [
+  {
+    id: "dental-deferral",
+    label: "Donor eligibility manual §12.4 — Dental procedures",
+  },
+  {
+    id: "surgical-deferral",
+    label: "Surgical deferral guideline §2.1",
+  },
+  {
+    id: "anaesthetic-table",
+    label: "Local anaesthetic deferral table",
+  },
 ];
 
 export const interviewHistory = [
