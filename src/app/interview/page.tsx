@@ -185,7 +185,7 @@ export default function InterviewPage() {
                 : "Eligibility summary view — prototype placeholder."}
             </div>
           ) : activeItemId === "dental" ? (
-            <div className="min-h-0 flex-1 overflow-y-auto bg-white px-8 py-8">
+            <div className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-white px-8 py-8">
               <p className="text-xs font-semibold uppercase tracking-wider text-[#727783]">
                 {dentalScreeningFlow.section} · {dentalScreeningFlow.questionNumber}
               </p>
@@ -209,16 +209,9 @@ export default function InterviewPage() {
                 </div>
               </div>
 
-              <div
-                className={`mt-6 transition-opacity ${
-                  donorResponse === "no"
-                    ? "pointer-events-none opacity-40 grayscale"
-                    : ""
-                }`}
-                aria-hidden={donorResponse === "no"}
-              >
-                {donorResponse === "yes" && (
-                  <div className="flex gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
+              {donorResponse === "yes" ? (
+                <>
+                  <div className="mt-6 flex gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
                     <InfoIcon className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" />
                     <div>
                       <p className="text-sm font-semibold text-blue-900">
@@ -229,69 +222,60 @@ export default function InterviewPage() {
                       </p>
                     </div>
                   </div>
-                )}
 
-                <section className={donorResponse === "yes" ? "mt-8" : "mt-0"}>
-                  <h2 className="text-base font-semibold text-[var(--clinical-on-surface)]">
-                    Follow-up questions
-                  </h2>
-                  {donorResponse === "no" && (
-                    <p className="mt-2 text-sm text-[#727783]">
-                      Not required for a &ldquo;No&rdquo; response.
-                    </p>
-                  )}
-                  <div className="mt-4 flex flex-col gap-4">
-                    {dentalScreeningFlow.followUps.map((followUp) => (
-                      <FollowUpQuestionCard
-                        key={followUp.id}
-                        followUp={followUp}
-                        disabled={donorResponse === "no"}
-                        answer={
-                          followUpAnswers[followUp.id] ?? {
-                            pillId: null,
-                            custom: "",
+                  <section className="mt-8">
+                    <h2 className="text-base font-semibold text-[var(--clinical-on-surface)]">
+                      Follow-up questions
+                    </h2>
+                    <div className="mt-4 flex flex-col gap-4">
+                      {dentalScreeningFlow.followUps.map((followUp) => (
+                        <FollowUpQuestionCard
+                          key={followUp.id}
+                          followUp={followUp}
+                          answer={
+                            followUpAnswers[followUp.id] ?? {
+                              pillId: null,
+                              custom: "",
+                            }
                           }
-                        }
-                        onSelectPill={(pillId) =>
-                          setFollowUpAnswers((prev) => ({
-                            ...prev,
-                            [followUp.id]: {
-                              pillId,
-                              custom: prev[followUp.id]?.custom ?? "",
-                            },
-                          }))
-                        }
-                        onCustomChange={(custom) =>
-                          setFollowUpAnswers((prev) => ({
-                            ...prev,
-                            [followUp.id]: {
-                              pillId: prev[followUp.id]?.pillId ?? null,
-                              custom,
-                            },
-                          }))
-                        }
-                      />
-                    ))}
-                  </div>
-                </section>
-              </div>
+                          onSelectPill={(pillId) =>
+                            setFollowUpAnswers((prev) => ({
+                              ...prev,
+                              [followUp.id]: {
+                                pillId,
+                                custom: prev[followUp.id]?.custom ?? "",
+                              },
+                            }))
+                          }
+                          onCustomChange={(custom) =>
+                            setFollowUpAnswers((prev) => ({
+                              ...prev,
+                              [followUp.id]: {
+                                pillId: prev[followUp.id]?.pillId ?? null,
+                                custom,
+                              },
+                            }))
+                          }
+                        />
+                      ))}
+                    </div>
+                  </section>
 
-              <section className="mt-8">
-                <h2 className="text-base font-semibold text-[var(--clinical-on-surface)]">
-                  Notes
-                </h2>
-                <textarea
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder={
-                    donorResponse === "no"
-                      ? "Add any additional context for this negative response…"
-                      : "Record any additional observations or verbal clarifications..."
-                  }
-                  rows={5}
-                  className="mt-3 w-full resize-none rounded-xl border border-[var(--clinical-outline)] bg-[var(--clinical-surface)] px-4 py-3 text-sm leading-6 outline-none placeholder:text-[#727783] focus:border-[var(--clinical-primary)] focus:bg-white focus:ring-2 focus:ring-[var(--clinical-primary)]/20"
-                />
-              </section>
+                  <NotesSection
+                    value={notes}
+                    onChange={setNotes}
+                    variant="default"
+                  />
+                </>
+              ) : (
+                <div className="-mx-8 mt-6 flex min-h-0 flex-1 flex-col bg-[#f3f4f5] px-8 py-6">
+                  <NotesSection
+                    value={notes}
+                    onChange={setNotes}
+                    variant="negative"
+                  />
+                </div>
+              )}
             </div>
           ) : (
             <div className="flex flex-1 items-center justify-center p-8 text-sm text-[var(--clinical-on-surface-variant)]">
@@ -364,6 +348,41 @@ export default function InterviewPage() {
   );
 }
 
+function NotesSection({
+  value,
+  onChange,
+  variant,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  variant: "default" | "negative";
+}) {
+  const isNegative = variant === "negative";
+
+  return (
+    <section className={isNegative ? "flex min-h-0 flex-1 flex-col" : "mt-8"}>
+      <h2 className="text-base font-semibold text-[var(--clinical-on-surface)]">
+        Notes
+      </h2>
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={
+          isNegative
+            ? "Add any additional context for this negative response…"
+            : "Record any additional observations or verbal clarifications..."
+        }
+        rows={isNegative ? 8 : 5}
+        className={`mt-3 w-full resize-none rounded-xl border px-4 py-3 text-sm leading-6 outline-none placeholder:text-[#727783] focus:border-[var(--clinical-primary)] focus:bg-white focus:ring-2 focus:ring-[var(--clinical-primary)]/20 ${
+          isNegative
+            ? "min-h-[200px] flex-1 border-[#e5e7eb] bg-[#eceef0] focus:bg-white"
+            : "border-[var(--clinical-outline)] bg-[var(--clinical-surface)]"
+        }`}
+      />
+    </section>
+  );
+}
+
 function DonorResponseButton({
   label,
   selected,
@@ -383,19 +402,17 @@ function DonorResponseButton({
         selected
           ? variant === "yes"
             ? "border-emerald-500 bg-emerald-50 text-emerald-800"
-            : "border-slate-400 bg-slate-100 text-slate-700"
+            : "border-[var(--clinical-primary)] bg-[#eef4fc] text-[var(--clinical-primary-dark)]"
           : "border-[var(--clinical-outline)] bg-white text-[var(--clinical-on-surface-variant)] hover:border-[#c2c6d4] hover:bg-[var(--clinical-surface)]"
       }`}
       aria-pressed={selected}
     >
-      {variant === "yes" ? (
-        <ThumbsUpIcon
-          className={`h-4 w-4 ${selected ? "text-emerald-600" : "text-[#c2c6d4]"}`}
-        />
+      {selected ? (
+        <CheckIcon className={`h-4 w-4 ${variant === "yes" ? "text-emerald-600" : "text-[var(--clinical-primary)]"}`} />
+      ) : variant === "yes" ? (
+        <ThumbsUpIcon className="h-4 w-4 text-[#c2c6d4]" />
       ) : (
-        <ThumbsDownIcon
-          className={`h-4 w-4 ${selected ? "text-[#727783]" : "text-[#c2c6d4]"}`}
-        />
+        <ThumbsDownIcon className="h-4 w-4 text-[#c2c6d4]" />
       )}
       {label}
     </button>
@@ -407,13 +424,11 @@ function FollowUpQuestionCard({
   answer,
   onSelectPill,
   onCustomChange,
-  disabled = false,
 }: {
   followUp: FollowUpQuestion;
   answer: FollowUpAnswer;
   onSelectPill: (pillId: string) => void;
   onCustomChange: (custom: string) => void;
-  disabled?: boolean;
 }) {
   const isComplete = Boolean(answer.pillId || answer.custom.trim());
 
@@ -450,9 +465,8 @@ function FollowUpQuestionCard({
                 <button
                   key={opt.id}
                   type="button"
-                  disabled={disabled}
                   onClick={() => onSelectPill(opt.id)}
-                  className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed ${
+                  className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
                     selected
                       ? "border-emerald-500 bg-emerald-50 text-emerald-800"
                       : "border-[var(--clinical-outline)] bg-white text-[var(--clinical-on-surface)] hover:border-[#c2c6d4]"
@@ -467,11 +481,10 @@ function FollowUpQuestionCard({
 
           <textarea
             value={answer.custom}
-            disabled={disabled}
             onChange={(e) => onCustomChange(e.target.value)}
             placeholder="Or type a custom response..."
             rows={2}
-            className="mt-3 w-full resize-none rounded-lg border border-[var(--clinical-outline)] bg-[var(--clinical-surface)] px-3 py-2.5 text-sm outline-none placeholder:text-[#727783] focus:border-[var(--clinical-primary)] focus:bg-white disabled:cursor-not-allowed disabled:opacity-70"
+            className="mt-3 w-full resize-none rounded-lg border border-[var(--clinical-outline)] bg-[var(--clinical-surface)] px-3 py-2.5 text-sm outline-none placeholder:text-[#727783] focus:border-[var(--clinical-primary)] focus:bg-white"
           />
         </div>
       </div>
