@@ -44,10 +44,16 @@ export default function Home() {
 
           <div className="mt-10 flex flex-col gap-3 sm:flex-row">
             <a
+              href="/interview"
+              className="inline-flex h-11 items-center justify-center rounded-full bg-foreground px-6 text-sm font-medium text-background transition-opacity hover:opacity-90"
+            >
+              Open interview prototype
+            </a>
+            <a
               href="https://nextjs.org/docs"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex h-11 items-center justify-center rounded-full bg-foreground px-6 text-sm font-medium text-background transition-opacity hover:opacity-90"
+              className="inline-flex h-11 items-center justify-center rounded-full border border-black/10 px-6 text-sm font-medium transition-colors hover:bg-black/5 dark:border-white/15 dark:hover:bg-white/5"
             >
               Read the docs
             </a>

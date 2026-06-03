@@ -2,546 +2,529 @@
 
 import { useMemo, useState } from "react";
 import {
-  answers as allAnswers,
+  activeClarification,
+  checklistSections,
+  clinicalInsight,
+  computeProgress,
   donor,
-  evaluateFactors,
-  factorLibrary,
-  outcomeMeta,
-  sections,
+  interviewHistory,
+  linkedProtocols,
+  reviewedBaseline,
+  totalQuestions,
+  type ClarificationAnswer,
   type Outcome,
-  type RiskLevel,
 } from "./data";
 
-const riskMeta: Record<
-  RiskLevel,
-  { label: string; dot: string; chip: string; ring: string }
-> = {
-  low: {
-    label: "Low risk",
-    dot: "bg-emerald-500",
-    chip: "bg-emerald-50 text-emerald-700",
-    ring: "ring-emerald-100",
-  },
-  attention: {
-    label: "Needs attention",
-    dot: "bg-amber-500",
-    chip: "bg-amber-50 text-amber-700",
-    ring: "ring-amber-200",
-  },
-  high: {
-    label: "Flagged",
-    dot: "bg-rose-500",
-    chip: "bg-rose-50 text-rose-700",
-    ring: "ring-rose-200",
-  },
-};
-
 export default function InterviewPage() {
-  const [activeSection, setActiveSection] = useState<string>(sections[0]);
-  const [showFlaggedOnly, setShowFlaggedOnly] = useState(false);
-  const [reviewed, setReviewed] = useState<Record<string, boolean>>({});
-  const [notes, setNotes] = useState<Record<string, string>>({});
-  const [selectedFactors, setSelectedFactors] = useState<string[]>([]);
-  const [outcome, setOutcome] = useState<Outcome | null>(null);
-
-  const flaggedCount = useMemo(
-    () => allAnswers.filter((a) => a.risk !== "low").length,
-    []
+  const [activeTab, setActiveTab] = useState<"interview" | "history" | "eligibility">(
+    "interview"
   );
-  const reviewedCount = Object.values(reviewed).filter(Boolean).length;
-  const progress = Math.round((reviewedCount / allAnswers.length) * 100);
+  const [activeItemId, setActiveItemId] = useState("dental");
+  const [selectedAnswer, setSelectedAnswer] = useState<ClarificationAnswer>(null);
+  const [notes, setNotes] = useState("");
+  const [outcome, setOutcome] = useState<Outcome>(null);
 
-  const guidance = useMemo(
-    () => evaluateFactors(selectedFactors),
-    [selectedFactors]
-  );
-
-  const visibleAnswers = useMemo(() => {
-    return allAnswers.filter((a) => {
-      if (showFlaggedOnly && a.risk === "low") return false;
-      return a.section === activeSection;
-    });
-  }, [activeSection, showFlaggedOnly]);
-
-  const sectionStats = useMemo(() => {
-    return sections.map((s) => {
-      const items = allAnswers.filter((a) => a.section === s);
-      const flagged = items.filter((a) => a.risk !== "low").length;
-      const done = items.filter((a) => reviewed[a.id]).length;
-      const worst: RiskLevel = items.some((a) => a.risk === "high")
-        ? "high"
-        : items.some((a) => a.risk === "attention")
-          ? "attention"
-          : "low";
-      return { section: s, total: items.length, flagged, done, worst };
-    });
-  }, [reviewed]);
-
-  function toggleFactor(id: string) {
-    setSelectedFactors((prev) =>
-      prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]
-    );
-  }
+  const progress = useMemo(() => {
+    const bonus = selectedAnswer ? 1 : 0;
+    return computeProgress(reviewedBaseline + bonus, totalQuestions);
+  }, [selectedAnswer]);
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-slate-100 text-slate-900">
-      {/* ===================== TOP BAR ===================== */}
-      <header className="flex shrink-0 items-center gap-6 border-b border-slate-200 bg-white px-6 py-3">
+    <div className="flex h-screen flex-col overflow-hidden bg-[var(--clinical-surface)] text-[var(--clinical-on-surface)]">
+      {/* Top header */}
+      <header className="flex shrink-0 items-center gap-6 border-b border-[var(--clinical-outline)] bg-white px-6 py-3">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-rose-600 text-sm font-bold text-white">
-            ＋
+          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#dbe4ed] text-sm font-semibold text-[var(--clinical-on-surface-variant)]">
+            MT
           </div>
           <div className="leading-tight">
-            <p className="text-sm font-semibold">Donor Eligibility Review</p>
-            <p className="text-xs text-slate-500">Triage interview · Room 3</p>
+            <p className="font-[family-name:var(--font-public-sans)] text-base font-semibold">
+              {donor.name}
+            </p>
+            <p className="text-sm text-[var(--clinical-on-surface-variant)]">
+              ID: {donor.donorId} · Type: {donor.bloodType}
+            </p>
           </div>
         </div>
 
-        <div className="mx-2 h-9 w-px bg-slate-200" />
+        <div className="hidden h-9 w-px bg-[var(--clinical-outline)] sm:block" />
 
-        {/* Donor summary */}
-        <div className="flex items-center gap-5">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-200 text-sm font-semibold text-slate-600">
-            {donor.name
-              .split(" ")
-              .map((n) => n[0])
-              .join("")}
-          </div>
-          <div className="leading-tight">
-            <p className="text-sm font-semibold">{donor.name}</p>
-            <p className="text-xs text-slate-500">
-              {donor.donorId} · {donor.age}/{donor.sex[0]} · {donor.bloodType}
-            </p>
-          </div>
-          <Stat label="Donation" value={donor.donationType} />
-          <Stat label="Last donation" value={donor.lastDonation} />
-          <Stat label="Lifetime" value={`${donor.totalDonations} donations`} />
+        <div className="hidden text-sm text-[var(--clinical-on-surface-variant)] md:block">
+          <span className="text-xs font-semibold uppercase tracking-wider text-[#727783]">
+            Last Donation
+          </span>
+          <p className="font-medium text-[var(--clinical-on-surface)]">
+            {donor.lastDonation}
+          </p>
         </div>
 
-        <div className="ml-auto flex items-center gap-4">
-          <div className="text-right leading-tight">
-            <p className="text-xs text-slate-500">Review progress</p>
-            <p className="text-sm font-semibold">
-              {reviewedCount}/{allAnswers.length} answers · {progress}%
-            </p>
-          </div>
-          <div className="h-2 w-32 overflow-hidden rounded-full bg-slate-200">
-            <div
-              className="h-full rounded-full bg-rose-500 transition-all"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-          <StatusPill outcome={outcome} />
+        <nav className="ml-4 flex items-center gap-6">
+          {(
+            [
+              { id: "interview" as const, label: "Interview" },
+              { id: "history" as const, label: "History" },
+              { id: "eligibility" as const, label: "Eligibility" },
+            ] as const
+          ).map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              className={`relative pb-0.5 text-sm font-medium transition-colors ${
+                activeTab === tab.id
+                  ? "text-[var(--clinical-primary)]"
+                  : "text-[var(--clinical-on-surface-variant)] hover:text-[var(--clinical-on-surface)]"
+              }`}
+            >
+              {tab.label}
+              {activeTab === tab.id && (
+                <span className="absolute -bottom-3 left-0 right-0 h-0.5 rounded-full bg-[var(--clinical-primary)]" />
+              )}
+            </button>
+          ))}
+        </nav>
+
+        <div className="ml-auto flex items-center gap-3">
+          <button
+            type="button"
+            className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 transition-colors hover:bg-red-100"
+          >
+            <AlertIcon className="h-4 w-4" />
+            Emergency Alert
+          </button>
+          <IconButton label="Notifications">
+            <BellIcon className="h-5 w-5" />
+          </IconButton>
+          <IconButton label="Settings">
+            <GearIcon className="h-5 w-5" />
+          </IconButton>
         </div>
       </header>
 
-      {/* ===================== THREE REGIONS ===================== */}
-      <div className="grid min-h-0 flex-1 grid-cols-[260px_minmax(0,1fr)_360px]">
-        {/* -------- LEFT: checklist / section navigator -------- */}
-        <aside className="flex min-h-0 flex-col overflow-y-auto border-r border-slate-200 bg-white">
-          <div className="px-4 py-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-              Interview checklist
-            </p>
+      {/* Three-column body: sidebars 1/4 each, main 1/2 */}
+      <div className="grid min-h-0 flex-1 grid-cols-4">
+        {/* Left: checklist */}
+        <aside className="col-span-1 flex min-h-0 min-w-0 flex-col overflow-y-auto border-r border-[var(--clinical-outline)] bg-white">
+          <div className="flex items-center justify-between px-5 py-4">
+            <h2 className="font-[family-name:var(--font-public-sans)] text-sm font-semibold">
+              Interview Checklist
+            </h2>
+            <span className="rounded-full bg-[var(--clinical-primary)] px-2.5 py-0.5 text-xs font-semibold text-white">
+              {totalQuestions} Questions
+            </span>
           </div>
-          <nav className="flex flex-col gap-1 px-3 pb-4">
-            {sectionStats.map((s) => {
-              const active = s.section === activeSection;
-              return (
-                <button
-                  key={s.section}
-                  onClick={() => setActiveSection(s.section)}
-                  className={`group rounded-lg border px-3 py-2.5 text-left transition-colors ${
-                    active
-                      ? "border-slate-300 bg-slate-50"
-                      : "border-transparent hover:bg-slate-50"
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`h-2 w-2 shrink-0 rounded-full ${riskMeta[s.worst].dot}`}
-                    />
-                    <span className="text-sm font-medium">{s.section}</span>
-                  </div>
-                  <div className="mt-1.5 flex items-center gap-2 pl-4 text-xs text-slate-500">
-                    <span>
-                      {s.done}/{s.total} reviewed
-                    </span>
-                    {s.flagged > 0 && (
-                      <span className="rounded bg-rose-50 px-1.5 py-0.5 font-medium text-rose-600">
-                        {s.flagged} flagged
-                      </span>
-                    )}
-                  </div>
-                </button>
-              );
-            })}
-          </nav>
 
-          <div className="mt-auto border-t border-slate-200 p-4">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
-              Summary
-            </p>
-            <Legend dot="bg-emerald-500" label={`${allAnswers.length - flaggedCount} low risk`} />
-            <Legend
-              dot="bg-amber-500"
-              label={`${allAnswers.filter((a) => a.risk === "attention").length} need attention`}
-            />
-            <Legend
-              dot="bg-rose-500"
-              label={`${allAnswers.filter((a) => a.risk === "high").length} flagged`}
-            />
-          </div>
+          <nav className="flex flex-col gap-6 px-3 pb-6">
+            {checklistSections.map((section) => (
+              <div key={section.title}>
+                <p className="mb-2 px-2 text-[11px] font-semibold tracking-wide text-[#727783]">
+                  {section.title}
+                </p>
+                <ul className="flex flex-col gap-0.5">
+                  {section.items.map((item) => {
+                    const active = item.id === activeItemId;
+                    const isClarification = item.status === "clarification";
+                    return (
+                      <li key={item.id}>
+                        <button
+                          type="button"
+                          onClick={() => setActiveItemId(item.id)}
+                          className={`w-full rounded-lg px-3 py-2.5 text-left transition-colors ${
+                            isClarification
+                              ? "border border-amber-200 bg-amber-50"
+                              : active
+                                ? "bg-[var(--clinical-surface)]"
+                                : "hover:bg-[var(--clinical-surface)]"
+                          }`}
+                        >
+                          <div className="flex items-start gap-2.5">
+                            <StatusIcon status={item.status} />
+                            <div className="min-w-0 flex-1">
+                              <p
+                                className={`text-sm font-medium ${
+                                  isClarification
+                                    ? "text-amber-800"
+                                    : "text-[var(--clinical-on-surface)]"
+                                }`}
+                              >
+                                {item.label}
+                              </p>
+                              {item.subtext && (
+                                <p className="mt-0.5 text-xs text-amber-700">
+                                  {item.subtext}
+                                </p>
+                              )}
+                              {isClarification && (
+                                <p className="mt-1 text-xs font-semibold text-amber-600">
+                                  Needs Clarification
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
+          </nav>
         </aside>
 
-        {/* -------- CENTER: questionnaire review -------- */}
-        <main className="flex min-h-0 flex-col overflow-hidden">
-          <div className="flex shrink-0 items-center justify-between border-b border-slate-200 bg-white px-6 py-3">
-            <div>
-              <h2 className="text-base font-semibold">{activeSection}</h2>
-              <p className="text-xs text-slate-500">
-                {visibleAnswers.length} answers · review with the donor and capture
-                clarifications
-              </p>
+        {/* Center: clarification */}
+        <main className="col-span-2 flex min-h-0 min-w-0 flex-col overflow-hidden">
+          {activeTab !== "interview" ? (
+            <div className="flex flex-1 items-center justify-center p-8 text-sm text-[var(--clinical-on-surface-variant)]">
+              {activeTab === "history"
+                ? "Donor history view — prototype placeholder."
+                : "Eligibility summary view — prototype placeholder."}
             </div>
-            <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-600">
-              <input
-                type="checkbox"
-                checked={showFlaggedOnly}
-                onChange={(e) => setShowFlaggedOnly(e.target.checked)}
-                className="h-4 w-4 rounded border-slate-300 accent-rose-600"
-              />
-              Flagged only
-            </label>
-          </div>
+          ) : activeItemId === "dental" ? (
+            <>
+              <div className="shrink-0 border-b border-[var(--clinical-outline)] bg-white px-8 py-5">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--clinical-primary-container)] text-[var(--clinical-primary)]">
+                    <DocumentIcon className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h1 className="font-[family-name:var(--font-public-sans)] text-xl font-semibold">
+                      Clarification Required
+                    </h1>
+                    <p className="text-sm text-[var(--clinical-on-surface-variant)]">
+                      Following up on: {activeClarification.topic}
+                    </p>
+                  </div>
+                </div>
+              </div>
 
-          <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-6 py-5">
-            {visibleAnswers.length === 0 && (
-              <p className="rounded-lg border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500">
-                No answers match this filter in {activeSection}.
-              </p>
-            )}
-            {visibleAnswers.map((a) => {
-              const meta = riskMeta[a.risk];
-              const isReviewed = !!reviewed[a.id];
-              return (
-                <article
-                  key={a.id}
-                  className={`rounded-xl border bg-white p-4 transition-shadow ${
-                    a.risk === "low"
-                      ? "border-slate-200"
-                      : `border-l-4 shadow-sm ring-1 ${meta.ring} ${
-                          a.risk === "high"
-                            ? "border-l-rose-500"
-                            : "border-l-amber-500"
-                        }`
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-slate-900">
-                        {a.question}
-                      </p>
-                      <p className="mt-1 text-sm text-slate-600">
-                        <span className="text-slate-400">Donor answered: </span>
-                        <span className="font-medium text-slate-800">
-                          {a.response}
-                        </span>
-                      </p>
-                    </div>
-                    <span
-                      className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${meta.chip}`}
-                    >
-                      {meta.label}
-                    </span>
+              <div className="min-h-0 flex-1 overflow-y-auto px-8 py-6">
+                <article className="rounded-2xl border border-[var(--clinical-outline)] bg-white p-6 shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+                  <p className="text-base font-semibold text-[var(--clinical-on-surface)]">
+                    {activeClarification.question}
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-[var(--clinical-on-surface-variant)]">
+                    {activeClarification.guidance}
+                  </p>
+
+                  <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                    {activeClarification.answerOptions.map((opt) => {
+                      const selected = selectedAnswer === opt.id;
+                      return (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          onClick={() => setSelectedAnswer(opt.id)}
+                          className={`min-w-[180px] flex-1 rounded-lg border-2 px-4 py-3 text-left text-sm font-medium transition-all ${
+                            selected
+                              ? "border-[var(--clinical-primary)] bg-[#eef4fc] text-[var(--clinical-primary-dark)]"
+                              : "border-[var(--clinical-primary)] bg-white text-[var(--clinical-primary)] hover:bg-[#eef4fc]/50"
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      );
+                    })}
                   </div>
 
-                  {a.reference && (
-                    <p className="mt-2 rounded-md bg-slate-50 px-3 py-1.5 text-xs text-slate-600">
-                      <span className="font-semibold text-slate-500">Guidance · </span>
-                      {a.reference}
-                    </p>
-                  )}
-
-                  {a.followUps && a.followUps.length > 0 && (
-                    <div className="mt-3">
-                      <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                        Recommended follow-up
-                      </p>
-                      <ul className="space-y-1.5">
-                        {a.followUps.map((f) => (
-                          <li
-                            key={f.id}
-                            className="flex items-start gap-2 text-sm text-slate-700"
-                          >
-                            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-slate-400" />
-                            {f.prompt}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {(a.risk !== "low" || notes[a.id]) && (
-                    <textarea
-                      value={notes[a.id] ?? ""}
-                      onChange={(e) =>
-                        setNotes((prev) => ({ ...prev, [a.id]: e.target.value }))
-                      }
-                      placeholder="Capture clarification from the donor…"
-                      rows={2}
-                      className="mt-3 w-full resize-none rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none placeholder:text-slate-400 focus:border-slate-400 focus:bg-white"
-                    />
-                  )}
-
-                  <div className="mt-3 flex items-center justify-between">
-                    <button
-                      onClick={() =>
-                        setReviewed((prev) => ({ ...prev, [a.id]: !prev[a.id] }))
-                      }
-                      className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                        isReviewed
-                          ? "bg-emerald-50 text-emerald-700"
-                          : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                      }`}
+                  <div className="mt-8">
+                    <label
+                      htmlFor="staff-notes"
+                      className="text-xs font-semibold uppercase tracking-wider text-[#727783]"
                     >
-                      <span
-                        className={`flex h-4 w-4 items-center justify-center rounded-full border text-[10px] ${
-                          isReviewed
-                            ? "border-emerald-500 bg-emerald-500 text-white"
-                            : "border-slate-400 text-transparent"
-                        }`}
-                      >
-                        ✓
-                      </span>
-                      {isReviewed ? "Reviewed" : "Mark reviewed"}
+                      Clinical Staff Notes
+                    </label>
+                    <textarea
+                      id="staff-notes"
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      placeholder="Enter detailed procedure notes here..."
+                      rows={4}
+                      className="mt-2 w-full resize-none rounded-lg border border-[var(--clinical-outline-variant)] bg-[var(--clinical-surface)] px-4 py-3 text-sm outline-none transition-[border-color] placeholder:text-[#727783] focus:border-[var(--clinical-primary)] focus:border-2 focus:bg-white"
+                    />
+                  </div>
+
+                  <div className="mt-6 flex flex-wrap items-center justify-end gap-3 border-t border-[var(--clinical-outline)] pt-6">
+                    <button
+                      type="button"
+                      className="rounded-lg border border-[var(--clinical-outline)] bg-[var(--clinical-surface)] px-4 py-2.5 text-sm font-medium text-[var(--clinical-on-surface-variant)] hover:bg-[#edeeef]"
+                    >
+                      Consult Nurse
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setOutcome("deferred")}
+                      className="rounded-lg bg-[var(--clinical-error)] px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90"
+                    >
+                      Major (Defer)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setOutcome("eligible")}
+                      className="rounded-lg bg-[var(--clinical-primary-dark)] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[var(--clinical-primary)]"
+                    >
+                      Minor (Proceed)
                     </button>
                   </div>
                 </article>
-              );
-            })}
-          </div>
+
+                <section className="mt-8">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-[#727783]">
+                    Interview History
+                  </h3>
+                  <ul className="mt-3 space-y-3">
+                    {interviewHistory.map((entry) => (
+                      <li
+                        key={entry.event}
+                        className="flex items-start gap-3 text-sm"
+                      >
+                        <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-[var(--clinical-primary)]" />
+                        <div>
+                          <p className="font-medium">{entry.event}</p>
+                          <p className="text-xs text-[var(--clinical-on-surface-variant)]">
+                            {entry.time}
+                          </p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              </div>
+            </>
+          ) : (
+            <div className="flex flex-1 items-center justify-center p-8 text-sm text-[var(--clinical-on-surface-variant)]">
+              This checklist item is complete — no clarification needed.
+            </div>
+          )}
         </main>
 
-        {/* -------- RIGHT: AI decision support + escalation + outcome -------- */}
-        <aside className="flex min-h-0 flex-col overflow-y-auto border-l border-slate-200 bg-white">
-          {/* AI decision-support panel */}
-          <section className="border-b border-slate-200 p-4">
-            <div className="mb-1 flex items-center gap-2">
-              <span className="flex h-6 w-6 items-center justify-center rounded-md bg-indigo-600 text-xs font-bold text-white">
-                AI
-              </span>
-              <h3 className="text-sm font-semibold">Decision support</h3>
-            </div>
-            <p className="mb-3 text-xs text-slate-500">
-              Select the donor factors that apply. The assistant returns
-              rule-based guidance with sources — you keep the final call.
-            </p>
+        {/* Right: clinical insights */}
+        <aside className="col-span-1 flex min-h-0 min-w-0 flex-col overflow-y-auto border-l border-[var(--clinical-outline)] bg-[var(--clinical-surface-insights)]">
+          <div className="px-5 py-4">
+            <h2 className="font-[family-name:var(--font-public-sans)] text-sm font-semibold">
+              Clinical Insights
+            </h2>
+          </div>
 
-            <div className="flex flex-wrap gap-1.5">
-              {factorLibrary.map((f) => {
-                const on = selectedFactors.includes(f.id);
-                return (
-                  <button
-                    key={f.id}
-                    onClick={() => toggleFactor(f.id)}
-                    className={`rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
-                      on
-                        ? "border-indigo-300 bg-indigo-50 text-indigo-700"
-                        : "border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
-                    }`}
-                  >
-                    {f.label}
-                  </button>
-                );
-              })}
-            </div>
-
-            {guidance ? (
-              <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
-                <div
-                  className={`mb-2 inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-semibold ${outcomeMeta[guidance.outcome].tone} ${outcomeMeta[guidance.outcome].text} ${outcomeMeta[guidance.outcome].border}`}
-                >
-                  <span
-                    className={`h-2 w-2 rounded-full ${outcomeMeta[guidance.outcome].dot}`}
-                  />
-                  {outcomeMeta[guidance.outcome].label}
-                </div>
-                <p className="text-sm font-medium text-slate-800">
-                  {guidance.headline}
-                </p>
-
-                <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                  Why
-                </p>
-                <ul className="mt-1 space-y-2">
-                  {guidance.rationale.map((r) => (
-                    <li
-                      key={r.factor}
-                      className="rounded-lg border border-slate-200 bg-white p-2.5"
-                    >
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`h-2 w-2 rounded-full ${outcomeMeta[r.severity].dot}`}
-                        />
-                        <span className="text-xs font-semibold text-slate-800">
-                          {r.factor}
-                        </span>
-                      </div>
-                      <p className="mt-1 text-xs text-slate-600">{r.detail}</p>
-                      <p className="mt-1 text-[11px] font-medium text-indigo-600">
-                        ↳ {r.reference}
-                      </p>
-                    </li>
-                  ))}
-                </ul>
-
-                <div className="mt-3 flex items-center justify-between rounded-lg bg-white px-2.5 py-2">
-                  <span className="text-xs text-slate-500">
-                    Confidence:{" "}
-                    <span className="font-semibold capitalize text-slate-700">
-                      {guidance.confidence}
-                    </span>
-                  </span>
-                  <button
-                    onClick={() => setOutcome(guidance.outcome)}
-                    className="rounded-md bg-slate-900 px-2.5 py-1 text-xs font-medium text-white hover:bg-slate-700"
-                  >
-                    Apply to outcome
-                  </button>
-                </div>
-
-                <p className="mt-2 flex items-start gap-1.5 text-[11px] text-slate-400">
-                  <span>ⓘ</span>
-                  Guidance is advisory and rule-based. Confirm with the donor and
-                  use clinical judgment before deciding.
-                </p>
-              </div>
-            ) : (
-              <p className="mt-4 rounded-lg border border-dashed border-slate-300 p-4 text-center text-xs text-slate-400">
-                Select one or more factors to see structured guidance.
+          <div className="px-4 pb-6">
+            <article className="rounded-xl border border-[var(--clinical-outline)] border-l-4 border-l-[var(--clinical-secondary)] bg-white p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--clinical-secondary)]">
+                Analysis
               </p>
-            )}
-          </section>
+              <p className="mt-2 font-[family-name:var(--font-public-sans)] text-base font-semibold">
+                {clinicalInsight.title}
+              </p>
+              <p className="mt-2 text-sm leading-6 text-[var(--clinical-on-surface-variant)]">
+                {clinicalInsight.body}
+              </p>
+              {selectedAnswer === "anesthetic" && (
+                <p className="mt-3 rounded-lg bg-teal-50 px-3 py-2 text-xs font-medium text-teal-800">
+                  {clinicalInsight.deferralNote}
+                </p>
+              )}
+              <div className="mt-4 flex items-start gap-2 rounded-lg bg-[var(--clinical-surface)] px-3 py-2.5 text-xs text-[var(--clinical-on-surface-variant)]">
+                <BookIcon className="mt-0.5 h-4 w-4 shrink-0 text-[#727783]" />
+                <span>
+                  <span className="font-semibold">Ref: </span>
+                  {clinicalInsight.reference}
+                </span>
+              </div>
+            </article>
 
-          {/* Escalation guidance */}
-          <section className="border-b border-slate-200 p-4">
-            <h3 className="mb-2 text-sm font-semibold">Escalation guidance</h3>
-            <div className="space-y-2 text-xs">
-              <EscalationRow
-                tone="bg-amber-50 text-amber-700"
-                title="Nurse review"
-                desc="Borderline Hb, prior fainting, travel risk needing confirmation."
-              />
-              <EscalationRow
-                tone="bg-orange-50 text-orange-700"
-                title="Doctor / specialist"
-                desc="Anticoagulants, window-period exposure, unclear medical history."
-              />
-              <EscalationRow
-                tone="bg-rose-50 text-rose-700"
-                title="Defer"
-                desc="Active infection, antibiotics, recent tattoo within window."
-              />
-            </div>
-          </section>
-
-          {/* Final recommendation */}
-          <section className="mt-auto p-4">
-            <h3 className="mb-2 text-sm font-semibold">Final outcome</h3>
-            <div className="grid grid-cols-1 gap-2">
-              {(
-                [
-                  "eligible",
-                  "nurse_review",
-                  "doctor_review",
-                  "deferred",
-                ] as Outcome[]
-              ).map((o) => {
-                const m = outcomeMeta[o];
-                const active = outcome === o;
-                return (
-                  <button
-                    key={o}
-                    onClick={() => setOutcome(o)}
-                    className={`flex items-center gap-2.5 rounded-lg border px-3 py-2.5 text-left text-sm font-medium transition-all ${
-                      active
-                        ? `${m.tone} ${m.text} ${m.border} ring-1 ${m.border}`
-                        : "border-slate-200 text-slate-600 hover:bg-slate-50"
-                    }`}
-                  >
-                    <span className={`h-2.5 w-2.5 rounded-full ${m.dot}`} />
-                    {m.label}
-                  </button>
-                );
-              })}
-            </div>
-            <button
-              disabled={!outcome}
-              className="mt-3 w-full rounded-lg bg-rose-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-rose-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
-            >
-              Confirm &amp; sign off
-            </button>
-          </section>
+            <section className="mt-6">
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-[#727783]">
+                  Linked Protocols
+                </h3>
+                <ExternalLinkIcon className="h-4 w-4 text-[#727783]" />
+              </div>
+              <ul className="space-y-2">
+                {linkedProtocols.map((protocol) => (
+                  <li key={protocol}>
+                    <button
+                      type="button"
+                      className="w-full rounded-lg border border-[var(--clinical-outline)] bg-white px-4 py-3 text-left text-sm font-medium text-[var(--clinical-on-surface)] transition-colors hover:border-[var(--clinical-primary)] hover:bg-[#eef4fc]/30"
+                    >
+                      {protocol}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          </div>
         </aside>
       </div>
+
+      {/* Bottom action bar */}
+      <footer className="flex shrink-0 items-center justify-between gap-6 border-t border-[var(--clinical-outline)] bg-white px-6 py-4">
+        <div className="flex min-w-0 flex-1 items-center gap-4">
+          <span className="shrink-0 text-sm font-medium text-[var(--clinical-on-surface-variant)]">
+            Interview Progress:
+          </span>
+          <div className="flex min-w-0 max-w-md flex-1 items-center gap-3">
+            <div className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-[#e1e3e4]">
+              <div
+                className="h-full rounded-full bg-[var(--clinical-secondary)] transition-all duration-300"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+            <span className="shrink-0 text-sm font-semibold tabular-nums text-[var(--clinical-secondary)]">
+              {progress}%
+            </span>
+          </div>
+        </div>
+
+        <div className="flex shrink-0 flex-wrap items-center justify-end gap-3">
+          <button
+            type="button"
+            onClick={() => setOutcome("nurse_review")}
+            className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-semibold transition-colors ${
+              outcome === "nurse_review"
+                ? "border-amber-300 bg-amber-50 text-amber-800"
+                : "border-[var(--clinical-outline)] bg-white text-[var(--clinical-on-surface)] hover:bg-[var(--clinical-surface)]"
+            }`}
+          >
+            <PersonIcon className="h-4 w-4" />
+            Refer to Nurse Specialist
+          </button>
+          <button
+            type="button"
+            onClick={() => setOutcome("deferred")}
+            className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-semibold transition-colors ${
+              outcome === "deferred"
+                ? "border-red-300 bg-red-100 text-red-800"
+                : "border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
+            }`}
+          >
+            <DeferIcon className="h-4 w-4" />
+            Deferred
+          </button>
+          <button
+            type="button"
+            onClick={() => setOutcome("eligible")}
+            className={`inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition-colors ${
+              outcome === "eligible"
+                ? "bg-[var(--clinical-primary)]"
+                : "bg-[var(--clinical-primary-dark)] hover:bg-[var(--clinical-primary)]"
+            }`}
+          >
+            <CheckIcon className="h-4 w-4" />
+            Eligible to Proceed
+          </button>
+        </div>
+      </footer>
     </div>
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="leading-tight">
-      <p className="text-[11px] uppercase tracking-wide text-slate-400">{label}</p>
-      <p className="text-sm font-medium text-slate-700">{value}</p>
-    </div>
-  );
-}
-
-function Legend({ dot, label }: { dot: string; label: string }) {
-  return (
-    <div className="flex items-center gap-2 py-0.5 text-xs text-slate-600">
-      <span className={`h-2 w-2 rounded-full ${dot}`} />
-      {label}
-    </div>
-  );
-}
-
-function EscalationRow({
-  tone,
-  title,
-  desc,
+function IconButton({
+  label,
+  children,
 }: {
-  tone: string;
-  title: string;
-  desc: string;
+  label: string;
+  children: React.ReactNode;
 }) {
   return (
-    <div className="flex gap-2.5 rounded-lg border border-slate-200 p-2.5">
-      <span className={`mt-0.5 h-fit rounded px-1.5 py-0.5 font-semibold ${tone}`}>
-        {title}
-      </span>
-      <p className="text-slate-600">{desc}</p>
-    </div>
+    <button
+      type="button"
+      aria-label={label}
+      className="flex h-9 w-9 items-center justify-center rounded-lg text-[var(--clinical-on-surface-variant)] transition-colors hover:bg-[var(--clinical-surface)]"
+    >
+      {children}
+    </button>
   );
 }
 
-function StatusPill({ outcome }: { outcome: Outcome | null }) {
-  if (!outcome) {
+function StatusIcon({ status }: { status: "complete" | "clarification" | "pending" }) {
+  if (status === "complete") {
     return (
-      <span className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-medium text-slate-500">
-        <span className="h-2 w-2 rounded-full bg-slate-400" />
-        In review
+      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+        <CheckIcon className="h-3 w-3" />
       </span>
     );
   }
-  const m = outcomeMeta[outcome];
+  if (status === "clarification") {
+    return (
+      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+        <span className="text-xs font-bold">!</span>
+      </span>
+    );
+  }
   return (
-    <span
-      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-semibold ${m.tone} ${m.text} ${m.border}`}
-    >
-      <span className={`h-2 w-2 rounded-full ${m.dot}`} />
-      {m.label}
-    </span>
+    <span className="mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 border-[var(--clinical-outline-variant)]" />
+  );
+}
+
+function CheckIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+      <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function AlertIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2L1 21h22L12 2zm0 4.5L19.5 19h-15L12 6.5zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z" />
+    </svg>
+  );
+}
+
+function BellIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function GearIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="12" cy="12" r="3" />
+      <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function DocumentIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function BookIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M4 19.5A2.5 2.5 0 016.5 17H20M4 4.5A2.5 2.5 0 016.5 2H20v20H6.5A2.5 2.5 0 004 19.5z" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function ExternalLinkIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function PersonIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function DeferIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <circle cx="12" cy="12" r="10" />
+      <path d="M4.93 4.93l14.14 14.14" strokeLinecap="round" />
+    </svg>
   );
 }
