@@ -397,7 +397,7 @@ function FollowUpQuestionCard({
 }: {
   followUp: FollowUpQuestion;
   answer: FollowUpAnswer;
-  onSelectPill: (pillId: string) => void;
+  onSelectPill: (pillId: string | null) => void;
   onCustomChange: (custom: string) => void;
 }) {
   const isComplete = Boolean(answer.pillId || answer.custom.trim());
@@ -435,7 +435,8 @@ function FollowUpQuestionCard({
                 <button
                   key={opt.id}
                   type="button"
-                  onClick={() => onSelectPill(opt.id)}
+                  aria-pressed={selected}
+                  onClick={() => onSelectPill(selected ? null : opt.id)}
                   className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
                     selected
                       ? "border-emerald-500 bg-emerald-50 text-emerald-800"
