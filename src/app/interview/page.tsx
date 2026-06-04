@@ -137,7 +137,7 @@ export default function InterviewSelectionPage() {
             Clear
           </ActionButton>
           <p className="w-full text-xs text-blue-800 lg:hidden">
-            Prototype: confirm tablet Yes responses until API sync is live.
+            Prototype: mock tablet Yes responses until digital questionnaire API is connected.
           </p>
         </div>
       </div>

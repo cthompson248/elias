@@ -29,23 +29,19 @@ export default function InterviewReviewPage() {
     () => sessionQuestions.filter((q) => q.reviewStatus !== "ok"),
     [sessionQuestions]
   );
-  const defaultActiveId =
-    reviewQueue[0]?.id ?? sessionQuestions[0]?.id ?? "medications";
-
   const [activeTab, setActiveTab] = useState<"interview" | "history" | "eligibility">(
     "interview"
   );
   const [checklistFilter, setChecklistFilter] = useState<ChecklistFilter>("review");
-  const [activeItemId, setActiveItemId] = useState(defaultActiveId);
+  const [activeItemId, setActiveItemId] = useState(
+    () => reviewQueue[0]?.id ?? sessionQuestions[0]?.id ?? "b6"
+  );
   const [questionResponses, setQuestionResponses] = useState(() =>
     initialQuestionResponses(sessionQuestions)
   );
   const [followUpAnswers, setFollowUpAnswers] = useState<
     Record<string, Record<string, FollowUpAnswer>>
-  >({
-    medications: { "med-type": { pillId: "paracetamol", custom: "" } },
-    dental: { "procedure-type": { pillId: "cleaning", custom: "" } },
-  });
+  >({});
   const [notesByQuestion, setNotesByQuestion] = useState<Record<string, string>>(
     {}
   );
@@ -77,10 +73,15 @@ export default function InterviewReviewPage() {
     : {};
   const notes = notesByQuestion[activeItemId] ?? "";
 
-  const pharmacologicalAnswer =
-    activeFlowKey === "dental" && donorResponse === "yes"
-      ? (activeFollowUps["pharmacological"]?.pillId ?? null)
-      : null;
+  const showDeferralNote =
+    donorResponse === "yes" &&
+    (activeFlowKey === "b6"
+      ? activeFollowUps.nsaids?.pillId === "yes"
+      : activeFlowKey === "c11"
+        ? Boolean(activeFollowUps.procedure?.pillId)
+        : activeFlowKey === "a15"
+          ? activeFollowUps.a15a?.pillId === "yes"
+          : false);
 
   function setQuestionResponse(
     questionId: string,
@@ -303,9 +304,7 @@ export default function InterviewReviewPage() {
                 <p className="mt-2 text-sm leading-6 text-[var(--clinical-on-surface-variant)]">
                   {clinicalInsight.body}
                 </p>
-                {clinicalInsight.deferralNote &&
-                  (pharmacologicalAnswer === "anesthetic" ||
-                    pharmacologicalAnswer === "both") && (
+                {clinicalInsight.deferralNote && showDeferralNote && (
                     <p className="mt-3 rounded-lg bg-teal-50 px-3 py-2 text-xs font-medium text-teal-800">
                       {clinicalInsight.deferralNote}
                     </p>

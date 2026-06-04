@@ -1,0 +1,16 @@
+{
+  "source": "Lifeblood Donor Questionnaire (paper form Sections A, B, C)",
+  "maintainedIn": {
+    "screeningQuestions": "lifeblood-questions.ts",
+    "interviewFollowUps": "lifeblood-flows.ts"
+  },
+  "notes": {
+    "excludedFromPrototype": [
+      "A12 — country of birth (free text)",
+      "B4 — weight in kg (free text)",
+      "A1a, A15a, B2a, B15a, C7a, C8a — conditional sub-questions; modelled as followUps in lifeblood-flows.ts"
+    ],
+    "tabletResponses": "Mock yes/no on each row until digital API integration",
+    "totalYesNoQuestions": 47
+  }
+}
