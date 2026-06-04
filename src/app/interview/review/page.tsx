@@ -282,7 +282,6 @@ export default function InterviewReviewPage() {
           ) : activeFlow && activeFlowKey ? (
             <ScreeningDetailPanel
               flow={activeFlow}
-              emqCode={activeQuestion?.emqCode}
               questionCode={activeQuestion?.code}
               interviewRole={interviewRole}
               donorResponse={donorResponse}
@@ -329,8 +328,7 @@ export default function InterviewReviewPage() {
           ) : activeQuestion ? (
             <div className="flex flex-1 flex-col overflow-y-auto bg-white px-8 py-8">
               <p className="text-xs font-semibold uppercase tracking-wider text-[#727783]">
-                {activeQuestion.emqCode} · {activeQuestion.code} ·{" "}
-                {activeQuestion.category}
+                {activeQuestion.code} · {activeQuestion.category}
               </p>
               <div className="mt-2 flex items-center justify-between gap-6">
                 <h1 className="min-w-0 flex-1 font-[family-name:var(--font-public-sans)] text-2xl font-semibold leading-tight">
@@ -380,7 +378,7 @@ export default function InterviewReviewPage() {
                   Analysis
                   {activeQuestion && (
                     <span className="ml-2 font-mono normal-case text-[#727783]">
-                      {activeQuestion.emqCode} · {activeQuestion.code}
+                      {activeQuestion.code}
                     </span>
                   )}
                 </p>
@@ -542,7 +540,7 @@ function ChecklistQuestionCard({
 
       <div className="mt-2 flex flex-wrap items-center gap-2">
         <p className="font-mono text-xs font-bold tracking-wide text-[var(--clinical-primary)]">
-          {question.emqCode} · {question.code}
+          {question.code}
         </p>
       </div>
       <p className="mt-1 text-sm font-semibold leading-snug text-[var(--clinical-on-surface)]">
@@ -611,7 +609,6 @@ function ReviewStatusBadge({ status }: { status: QuestionReviewStatus }) {
 
 function ScreeningDetailPanel({
   flow,
-  emqCode,
   questionCode,
   interviewRole,
   donorResponse,
@@ -627,7 +624,6 @@ function ScreeningDetailPanel({
   onHazardousDonorDecision,
 }: {
   flow: ScreeningQuestionFlow;
-  emqCode?: string;
   questionCode?: string;
   interviewRole: InterviewRole;
   donorResponse: DonorScreeningResponse | null;
@@ -658,7 +654,6 @@ function ScreeningDetailPanel({
       className={`min-h-0 flex-1 overflow-y-auto bg-white px-8 py-8 ${readOnly ? "pointer-events-none opacity-60" : ""}`}
     >
       <p className="text-xs font-semibold uppercase tracking-wider text-[#727783]">
-        {emqCode && `${emqCode} · `}
         {questionCode ?? flow.questionNumber} · {flow.section}
       </p>
       <div className="mt-2 flex items-center justify-between gap-6">
