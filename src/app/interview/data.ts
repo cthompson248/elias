@@ -163,6 +163,57 @@ export const referenceGuidance = [
   },
 ];
 
+export type ReferenceGuidanceItem = (typeof referenceGuidance)[number];
+
+/** GSBD quick links keyed by interview flow (lifeblood-flows.ts). */
+const flowReferenceGuidanceIds: Record<string, string[]> = {
+  a3: ["gsbd-allow-listed-medical"],
+  a15: ["gsbd-travel"],
+  b2: ["gsbd-adverse-reactions"],
+  b5: ["gsbd-hazardous-activities"],
+  b6: ["gsbd-medications"],
+  b8: ["gsbd-allow-listed-medical"],
+  b11: ["gsbd-sexual-activity"],
+  b12: ["gsbd-medications"],
+  b13: ["gsbd-medications"],
+  b15: ["gsbd-pregnancy"],
+  b17: ["gsbd-travel"],
+  c7: ["gsbd-sexual-activity"],
+  c8: ["gsbd-sexual-activity"],
+  c11: ["gsbd-skin-penetration"],
+  c14: ["gsbd-sexual-activity"],
+};
+
+/** GSBD quick links for primary questions without a dedicated flow. */
+const questionReferenceGuidanceIds: Record<string, string[]> = {
+  a13: ["gsbd-travel"],
+  b16: ["gsbd-travel"],
+};
+
+export function referenceGuidanceIdsForQuestion(
+  question: InterviewQuestion
+): string[] {
+  if (question.flowKey && flowReferenceGuidanceIds[question.flowKey]) {
+    return flowReferenceGuidanceIds[question.flowKey];
+  }
+  return questionReferenceGuidanceIds[question.id] ?? [];
+}
+
+/** GSBD sections linked to questions the donor has answered Yes to. */
+export function getRelevantReferenceGuidance(
+  questions: InterviewQuestion[],
+  responses: Record<string, DonorScreeningResponse | null>
+): ReferenceGuidanceItem[] {
+  const linked = new Set<string>();
+  for (const q of questions) {
+    if (responses[q.id] !== "yes") continue;
+    for (const id of referenceGuidanceIdsForQuestion(q)) {
+      linked.add(id);
+    }
+  }
+  return referenceGuidance.filter((item) => linked.has(item.id));
+}
+
 /** Selected review-queue items default to Yes (tablet flagged in external system). */
 export function initialQuestionResponses(
   allQuestions: InterviewQuestion[],

@@ -8,8 +8,8 @@ import {
   donor,
   filterChecklistQuestions,
   getChecklistCounts,
+  getRelevantReferenceGuidance,
   initialQuestionResponses,
-  referenceGuidance,
   screeningFlows,
   type ChecklistFilter,
   type DonorScreeningResponse,
@@ -91,6 +91,11 @@ export default function InterviewReviewPage() {
       router.replace("/interview");
     }
   }, [reviewQueueIds.size, router]);
+
+  const relevantReferenceGuidance = useMemo(
+    () => getRelevantReferenceGuidance(allQuestions, questionResponses),
+    [allQuestions, questionResponses]
+  );
 
   const checklistCounts = getChecklistCounts(allQuestions, reviewQueueIds);
   const filteredQuestions = filterChecklistQuestions(
@@ -454,24 +459,31 @@ export default function InterviewReviewPage() {
               <h3 className="mb-3 text-sm font-medium text-[#727783]">
                 Reference guidance
               </h3>
-              <ul className="flex flex-col gap-2">
-                {referenceGuidance.map((item) => (
-                  <li key={item.id}>
-                    <button
-                      type="button"
-                      className="group flex w-full items-center gap-3 rounded-lg border border-[#e5e7eb] bg-white px-3 py-3 text-left transition-colors hover:border-[var(--clinical-outline-variant)] hover:bg-[var(--clinical-surface)]"
-                    >
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center text-violet-600">
-                        <BookIcon className="h-5 w-5" />
-                      </span>
-                      <span className="min-w-0 flex-1 text-sm font-medium leading-snug text-[var(--clinical-on-surface)]">
-                        {item.label}
-                      </span>
-                      <ChevronRightIcon className="h-4 w-4 shrink-0 text-[#c2c6d4] transition-colors group-hover:text-[#727783]" />
-                    </button>
-                  </li>
-                ))}
-              </ul>
+              {relevantReferenceGuidance.length > 0 ? (
+                <ul className="flex flex-col gap-2">
+                  {relevantReferenceGuidance.map((item) => (
+                    <li key={item.id}>
+                      <button
+                        type="button"
+                        className="group flex w-full items-center gap-3 rounded-lg border border-[#e5e7eb] bg-white px-3 py-3 text-left transition-colors hover:border-[var(--clinical-outline-variant)] hover:bg-[var(--clinical-surface)]"
+                      >
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center text-violet-600">
+                          <BookIcon className="h-5 w-5" />
+                        </span>
+                        <span className="min-w-0 flex-1 text-sm font-medium leading-snug text-[var(--clinical-on-surface)]">
+                          {item.label}
+                        </span>
+                        <ChevronRightIcon className="h-4 w-4 shrink-0 text-[#c2c6d4] transition-colors group-hover:text-[#727783]" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="rounded-lg border border-dashed border-[var(--clinical-outline)] bg-white px-3 py-3 text-sm text-[#727783]">
+                  GSBD guides appear here when the donor answers Yes to a
+                  question that links to a reference section.
+                </p>
+              )}
             </section>
           </div>
         </aside>
