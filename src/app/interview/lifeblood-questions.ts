@@ -135,7 +135,7 @@ export const lifebloodQuestionBank: QuestionBankEntry[] = [
   entry(
     "B5",
     B,
-    "In the next 3 days, intend to do activities risky if unwell after donating (e.g. heavy machinery, diving, flying)?",
+    "In the next 3 days, do you intend to participate in any activity which would place you or others at risk of injury if you were to become unwell after donating, such as driving public transport, operating heavy machinery, underwater diving, piloting a plane?",
     "no"
   ),
   entry(
@@ -309,7 +309,7 @@ export const lifebloodQuestionBank: QuestionBankEntry[] = [
   entry(
     "C14",
     C,
-    'In the last 3 months, sexual activity with someone who has ever injected non-prescribed drugs?',
+    'Have you engaged in sexual activity with someone who has ever "used drugs" by injection or been injected, even once, with drugs not prescribed by a doctor or dentist?',
     "no"
   ),
 ];
