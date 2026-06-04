@@ -31,14 +31,29 @@ export function clearInterviewSelection() {
   sessionStorage.removeItem(SELECTION_KEY);
 }
 
-export function getSessionInterviewQuestions(): InterviewQuestion[] {
-  const ids = loadInterviewSelection();
-  if (!ids?.length) return [];
+export function getSessionReviewQueueIds(): string[] {
+  return loadInterviewSelection() ?? [];
+}
+
+/** Full questionnaire (same list as the pre-interview selection screen). */
+export function getAllInterviewQuestions(): InterviewQuestion[] {
+  return questionBank.map(questionBankToInterview);
+}
+
+/** Questions selected on the pre-screen for DSNA review (subset of the bank). */
+export function getSessionReviewQueueQuestions(): InterviewQuestion[] {
+  const ids = getSessionReviewQueueIds();
+  if (!ids.length) return [];
   const byId = new Map(questionBank.map((q) => [q.id, q]));
   return ids
     .map((id) => byId.get(id))
     .filter((q): q is QuestionBankEntry => Boolean(q))
     .map(questionBankToInterview);
+}
+
+/** @deprecated Use getAllInterviewQuestions + getSessionReviewQueueIds */
+export function getSessionInterviewQuestions(): InterviewQuestion[] {
+  return getSessionReviewQueueQuestions();
 }
 
 export function getTabletYesIds(): string[] {

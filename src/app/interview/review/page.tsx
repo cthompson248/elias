@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   clinicalInsightByFlow,
   donor,
-  filterInterviewQuestions,
+  filterChecklistQuestions,
   getChecklistCounts,
   initialQuestionResponses,
   referenceGuidance,
@@ -18,7 +18,10 @@ import {
   type QuestionReviewStatus,
   type ScreeningQuestionFlow,
 } from "../data";
-import { getSessionInterviewQuestions } from "../session";
+import {
+  getAllInterviewQuestions,
+  getSessionReviewQueueIds,
+} from "../session";
 import {
   blocksDsna,
   canDsnaEdit,
@@ -32,20 +35,24 @@ type FollowUpAnswer = { pillId: string | null; custom: string };
 
 export default function InterviewReviewPage() {
   const router = useRouter();
-  const sessionQuestions = useMemo(() => getSessionInterviewQuestions(), []);
+  const allQuestions = useMemo(() => getAllInterviewQuestions(), []);
+  const reviewQueueIds = useMemo(
+    () => new Set(getSessionReviewQueueIds()),
+    []
+  );
   const reviewQueue = useMemo(
-    () => sessionQuestions.filter((q) => q.reviewStatus !== "ok"),
-    [sessionQuestions]
+    () => allQuestions.filter((q) => reviewQueueIds.has(q.id)),
+    [allQuestions, reviewQueueIds]
   );
   const [activeTab, setActiveTab] = useState<"interview" | "history" | "eligibility">(
     "interview"
   );
   const [checklistFilter, setChecklistFilter] = useState<ChecklistFilter>("review");
   const [activeItemId, setActiveItemId] = useState(
-    () => reviewQueue[0]?.id ?? sessionQuestions[0]?.id ?? "b6"
+    () => reviewQueue[0]?.id ?? allQuestions[0]?.id ?? "b6"
   );
   const [questionResponses, setQuestionResponses] = useState(() =>
-    initialQuestionResponses(sessionQuestions)
+    initialQuestionResponses(allQuestions, reviewQueueIds)
   );
   const [followUpAnswers, setFollowUpAnswers] = useState<
     Record<string, Record<string, FollowUpAnswer>>
@@ -61,19 +68,20 @@ export default function InterviewReviewPage() {
   );
 
   useEffect(() => {
-    if (sessionQuestions.length === 0) {
+    if (reviewQueueIds.size === 0) {
       router.replace("/interview");
     }
-  }, [sessionQuestions.length, router]);
+  }, [reviewQueueIds.size, router]);
 
-  const checklistCounts = getChecklistCounts(sessionQuestions);
-  const filteredQuestions = filterInterviewQuestions(
-    sessionQuestions,
-    checklistFilter
+  const checklistCounts = getChecklistCounts(allQuestions, reviewQueueIds);
+  const filteredQuestions = filterChecklistQuestions(
+    allQuestions,
+    checklistFilter,
+    reviewQueueIds
   );
-  const activeQuestion = sessionQuestions.find((q) => q.id === activeItemId);
+  const activeQuestion = allQuestions.find((q) => q.id === activeItemId);
 
-  if (sessionQuestions.length === 0) {
+  if (reviewQueueIds.size === 0) {
     return null;
   }
   const activeFlowKey = activeQuestion?.flowKey;

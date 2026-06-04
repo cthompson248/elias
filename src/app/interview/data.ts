@@ -71,6 +71,7 @@ export const donor: Donor = {
   lastDonation: "4 months ago",
 };
 
+/** @deprecated Use filterChecklistQuestions with full bank + review queue ids */
 export function filterInterviewQuestions(
   questions: InterviewQuestion[],
   filter: ChecklistFilter
@@ -85,11 +86,31 @@ export function filterInterviewQuestions(
   }
 }
 
-export function getChecklistCounts(questions: InterviewQuestion[]) {
+/** Review = pre-screen selection; All = full questionnaire; Clear = not in review queue */
+export function filterChecklistQuestions(
+  allQuestions: InterviewQuestion[],
+  filter: ChecklistFilter,
+  reviewQueueIds: ReadonlySet<string>
+): InterviewQuestion[] {
+  switch (filter) {
+    case "review":
+      return allQuestions.filter((q) => reviewQueueIds.has(q.id));
+    case "clear":
+      return allQuestions.filter((q) => !reviewQueueIds.has(q.id));
+    default:
+      return allQuestions;
+  }
+}
+
+export function getChecklistCounts(
+  allQuestions: InterviewQuestion[],
+  reviewQueueIds: ReadonlySet<string>
+) {
+  const review = allQuestions.filter((q) => reviewQueueIds.has(q.id)).length;
   return {
-    review: questions.filter((q) => q.reviewStatus !== "ok").length,
-    clear: questions.filter((q) => q.reviewStatus === "ok").length,
-    all: questions.length,
+    review,
+    clear: allQuestions.length - review,
+    all: allQuestions.length,
   };
 }
 
@@ -121,8 +142,15 @@ export const referenceGuidance = [
   },
 ];
 
+/** Selected review-queue items default to Yes (tablet flagged in external system). */
 export function initialQuestionResponses(
-  questions: InterviewQuestion[]
+  allQuestions: InterviewQuestion[],
+  reviewQueueIds: ReadonlySet<string>
 ): Record<string, DonorScreeningResponse | null> {
-  return Object.fromEntries(questions.map((q) => [q.id, q.tabletResponse]));
+  return Object.fromEntries(
+    allQuestions.map((q) => [
+      q.id,
+      reviewQueueIds.has(q.id) ? "yes" : q.tabletResponse,
+    ])
+  );
 }
