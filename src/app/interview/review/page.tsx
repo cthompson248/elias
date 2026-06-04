@@ -22,14 +22,15 @@ import {
   getAllInterviewQuestions,
   getSessionReviewQueueIds,
 } from "../session";
+import { escalationMeta, resolveInterviewEscalation, type EscalationLevel } from "../escalation";
 import {
-  blocksDsna,
-  canDsnaEdit,
-  escalationMeta,
-  requiresNurseConsult,
-  resolveInterviewEscalation,
-  type EscalationLevel,
-} from "../escalation";
+  canRoleEdit,
+  getFollowUpRoleNotice,
+  getRoleEscalationNotice,
+  loadInterviewRole,
+  type InterviewRole,
+  type RoleEscalationNotice,
+} from "../interview-role";
 
 type FollowUpAnswer = { pillId: string | null; custom: string };
 
@@ -60,12 +61,7 @@ export default function InterviewReviewPage() {
   const [notesByQuestion, setNotesByQuestion] = useState<Record<string, string>>(
     {}
   );
-  const [nurseConsultCleared, setNurseConsultCleared] = useState<
-    Record<string, boolean>
-  >({});
-  const [nurseTakeover, setNurseTakeover] = useState<Record<string, boolean>>(
-    {}
-  );
+  const [interviewRole] = useState<InterviewRole>(() => loadInterviewRole());
 
   useEffect(() => {
     if (reviewQueueIds.size === 0) {
@@ -112,31 +108,12 @@ export default function InterviewReviewPage() {
         activeQuestion.escalation,
         activeFlow?.followUps ?? [],
         activeFollowUps,
-        Boolean(nurseTakeover[activeItemId])
+        false
       )
     : "dsna";
 
-  const consultCleared = Boolean(nurseConsultCleared[activeItemId]);
-  const dsnaCanEdit = canDsnaEdit(effectiveEscalation, consultCleared);
-
-  useEffect(() => {
-    if (!activeQuestion || !activeFlow) return;
-    const level = resolveInterviewEscalation(
-      activeQuestion.escalation,
-      activeFlow.followUps,
-      activeFollowUps,
-      false
-    );
-    if (level === "nurse_takeover" && !nurseTakeover[activeItemId]) {
-      setNurseTakeover((prev) => ({ ...prev, [activeItemId]: true }));
-    }
-  }, [
-    activeQuestion,
-    activeFlow,
-    activeFollowUps,
-    activeItemId,
-    nurseTakeover,
-  ]);
+  const roleNotice = getRoleEscalationNotice(interviewRole, effectiveEscalation);
+  const canEdit = canRoleEdit(interviewRole, effectiveEscalation);
 
   function setQuestionResponse(
     questionId: string,
@@ -183,6 +160,10 @@ export default function InterviewReviewPage() {
           </div>
 
           <div className="hidden h-9 w-px bg-[var(--clinical-outline)] sm:block" />
+
+          <p className="hidden rounded-full border border-[var(--clinical-outline)] bg-[var(--clinical-surface)] px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--clinical-on-surface-variant)] sm:block">
+            {interviewRole === "dsna" ? "DSNA" : "Nurse"}
+          </p>
 
           <div className="hidden text-sm text-[var(--clinical-on-surface-variant)] md:block">
             <span className="text-xs font-semibold uppercase tracking-wider text-[#727783]">
@@ -285,10 +266,11 @@ export default function InterviewReviewPage() {
               flow={activeFlow}
               emqCode={activeQuestion?.emqCode}
               questionCode={activeQuestion?.code}
+              interviewRole={interviewRole}
               escalation={effectiveEscalation}
               wiDirection={activeQuestion?.wiDirection}
               donorResponse={donorResponse}
-              readOnly={!dsnaCanEdit}
+              readOnly={!canEdit}
               onDonorResponseChange={(response) =>
                 setQuestionResponse(activeItemId, response)
               }
@@ -306,21 +288,6 @@ export default function InterviewReviewPage() {
                   [activeItemId]: value,
                 }))
               }
-              consultCleared={consultCleared}
-              onConsultNurse={() =>
-                setNurseConsultCleared((prev) => ({
-                  ...prev,
-                  [activeItemId]: true,
-                }))
-              }
-              onHandToNurse={() =>
-                setNurseTakeover((prev) => ({ ...prev, [activeItemId]: true }))
-              }
-              onDoctorHotline={() => {
-                window.alert(
-                  "Prototype: Doctor / DEL hotline would be dialled per site protocol."
-                );
-              }}
             />
           ) : activeQuestion ? (
             <div className="flex flex-1 flex-col overflow-y-auto bg-white px-8 py-8">
@@ -373,8 +340,9 @@ export default function InterviewReviewPage() {
 
           <div className="px-4 pb-6">
             {activeQuestion && (
-              <div className="mb-4 px-1">
+              <div className="mb-4 space-y-3 px-1">
                 <EscalationBadge level={effectiveEscalation} />
+                {roleNotice && <RoleEscalationNotice notice={roleNotice} />}
                 {activeQuestion.wiDirection && (
                   <p className="mt-3 rounded-lg bg-white px-3 py-2.5 text-xs leading-5 text-[var(--clinical-on-surface-variant)] ring-1 ring-[var(--clinical-outline)]">
                     <span className="font-semibold text-[var(--clinical-on-surface)]">
@@ -626,6 +594,7 @@ function ScreeningDetailPanel({
   flow,
   emqCode,
   questionCode,
+  interviewRole,
   escalation,
   wiDirection,
   donorResponse,
@@ -636,14 +605,11 @@ function ScreeningDetailPanel({
   onCustomChange,
   notes,
   onNotesChange,
-  consultCleared,
-  onConsultNurse,
-  onHandToNurse,
-  onDoctorHotline,
 }: {
   flow: ScreeningQuestionFlow;
   emqCode?: string;
   questionCode?: string;
+  interviewRole: InterviewRole;
   escalation: EscalationLevel;
   wiDirection?: string;
   donorResponse: DonorScreeningResponse | null;
@@ -654,27 +620,14 @@ function ScreeningDetailPanel({
   onCustomChange: (followUpId: string, custom: string) => void;
   notes: string;
   onNotesChange: (value: string) => void;
-  consultCleared: boolean;
-  onConsultNurse: () => void;
-  onHandToNurse: () => void;
-  onDoctorHotline: () => void;
 }) {
   const followUpTrigger = flow.followUpTrigger ?? flow.donorResponse;
   const showFollowUps = donorResponse === followUpTrigger;
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <EscalationActionBar
-        escalation={escalation}
-        consultCleared={consultCleared}
-        onConsultNurse={onConsultNurse}
-        onHandToNurse={onHandToNurse}
-        onDoctorHotline={onDoctorHotline}
-      />
-
-      <div
-        className={`min-h-0 flex-1 overflow-y-auto bg-white px-8 py-8 ${readOnly ? "pointer-events-none opacity-60" : ""}`}
-      >
+    <div
+      className={`min-h-0 flex-1 overflow-y-auto bg-white px-8 py-8 ${readOnly ? "pointer-events-none opacity-60" : ""}`}
+    >
       <p className="text-xs font-semibold uppercase tracking-wider text-[#727783]">
         {emqCode && `${emqCode} · `}
         {questionCode ?? flow.questionNumber} · {flow.section}
@@ -711,19 +664,6 @@ function ScreeningDetailPanel({
         </p>
       )}
 
-      {blocksDsna(escalation) && (
-        <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
-          Nurse has taken over this question — DSNA responses are locked.
-        </div>
-      )}
-
-      {!consultCleared && requiresNurseConsult(escalation) && !blocksDsna(escalation) && (
-        <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          Nurse consult required before DSNA can complete this item. Use{" "}
-          <span className="font-semibold">Mark nurse consulted</span> when cleared.
-        </div>
-      )}
-
       {showFollowUps && (
         <>
           <div className="mt-6 flex gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
@@ -758,6 +698,7 @@ function ScreeningDetailPanel({
                     onCustomChange(followUp.id, custom)
                   }
                   readOnly={readOnly}
+                  interviewRole={interviewRole}
                 />
               ))}
             </div>
@@ -781,7 +722,24 @@ function ScreeningDetailPanel({
           className="mt-3 w-full resize-none rounded-xl border border-[var(--clinical-outline)] bg-[var(--clinical-surface)] px-4 py-3 text-sm leading-6 outline-none placeholder:text-[#727783] focus:border-[var(--clinical-primary)] focus:bg-white focus:ring-2 focus:ring-[var(--clinical-primary)]/20"
         />
       </section>
-      </div>
+    </div>
+  );
+}
+
+function RoleEscalationNotice({ notice }: { notice: RoleEscalationNotice }) {
+  const styles = {
+    amber: "border-amber-200 bg-amber-50 text-amber-900",
+    rose: "border-rose-200 bg-rose-50 text-rose-900",
+    blue: "border-blue-200 bg-blue-50 text-blue-900",
+  };
+
+  return (
+    <div
+      className={`rounded-xl border px-4 py-3 text-sm leading-6 ${styles[notice.tone]}`}
+      role="status"
+    >
+      <p className="font-semibold">{notice.title}</p>
+      <p className="mt-1">{notice.body}</p>
     </div>
   );
 }
@@ -802,66 +760,6 @@ function EscalationBadge({
     >
       {meta.shortLabel}
     </span>
-  );
-}
-
-function EscalationActionBar({
-  escalation,
-  consultCleared,
-  onConsultNurse,
-  onHandToNurse,
-  onDoctorHotline,
-}: {
-  escalation: EscalationLevel;
-  consultCleared: boolean;
-  onConsultNurse: () => void;
-  onHandToNurse: () => void;
-  onDoctorHotline: () => void;
-}) {
-  const meta = escalationMeta[escalation];
-  const needsConsult =
-    requiresNurseConsult(escalation) && !consultCleared && !blocksDsna(escalation);
-
-  return (
-    <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-[var(--clinical-outline)] bg-[var(--clinical-surface)] px-6 py-3">
-      <span
-        className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${meta.className}`}
-      >
-        {meta.label}
-      </span>
-      <div className="ml-auto flex flex-wrap gap-2">
-        {needsConsult && (
-          <button
-            type="button"
-            onClick={onConsultNurse}
-            className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-900 hover:bg-amber-100"
-          >
-            Mark nurse consulted
-          </button>
-        )}
-        <button
-          type="button"
-          onClick={onConsultNurse}
-          className="rounded-lg border border-[var(--clinical-outline)] bg-white px-3 py-1.5 text-xs font-semibold text-[var(--clinical-on-surface)] hover:bg-white/80"
-        >
-          Consult nurse
-        </button>
-        <button
-          type="button"
-          onClick={onHandToNurse}
-          className="rounded-lg border border-rose-300 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-900 hover:bg-rose-100"
-        >
-          Hand to nurse
-        </button>
-        <button
-          type="button"
-          onClick={onDoctorHotline}
-          className="rounded-lg bg-[var(--clinical-primary)] px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90"
-        >
-          Doctor / DEL hotline
-        </button>
-      </div>
-    </div>
   );
 }
 
@@ -913,14 +811,17 @@ function FollowUpQuestionCard({
   onSelectPill,
   onCustomChange,
   readOnly = false,
+  interviewRole,
 }: {
   followUp: FollowUpQuestion;
   answer: FollowUpAnswer;
   onSelectPill: (pillId: string | null) => void;
   onCustomChange: (custom: string) => void;
   readOnly?: boolean;
+  interviewRole: InterviewRole;
 }) {
   const isComplete = Boolean(answer.pillId || answer.custom.trim());
+  const followUpNotice = getFollowUpRoleNotice(interviewRole, followUp.escalation);
 
   return (
     <article
@@ -941,13 +842,18 @@ function FollowUpQuestionCard({
             <p className="text-sm font-semibold leading-snug text-[var(--clinical-on-surface)]">
               {followUp.question}
             </p>
-            <EscalationBadge level={followUp.escalation} compact />
-            {isComplete && (
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white">
-                <CheckIcon className="h-3.5 w-3.5" />
-              </span>
-            )}
+            <div className="flex shrink-0 items-center gap-2">
+              <EscalationBadge level={followUp.escalation} compact />
+              {isComplete && (
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-white">
+                  <CheckIcon className="h-3.5 w-3.5" />
+                </span>
+              )}
+            </div>
           </div>
+          {followUpNotice && (
+            <p className="mt-2 text-xs font-medium text-amber-800">{followUpNotice}</p>
+          )}
 
           <div className="mt-4 flex flex-wrap gap-2">
             {followUp.quickOptions.map((opt) => {

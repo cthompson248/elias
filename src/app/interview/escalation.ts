@@ -85,12 +85,3 @@ export function resolveInterviewEscalation(
   return level;
 }
 
-/** DSNA may edit responses unless nurse has taken over or consult is outstanding */
-export function canDsnaEdit(
-  level: EscalationLevel,
-  nurseConsultCleared: boolean
-): boolean {
-  if (blocksDsna(level)) return false;
-  if (requiresNurseConsult(level) && !nurseConsultCleared) return false;
-  return true;
-}

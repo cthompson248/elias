@@ -9,6 +9,7 @@ import {
   questionBank,
   type QuestionBankEntry,
 } from "./question-bank";
+import { InterviewRoleSwitcher } from "./InterviewRoleSwitcher";
 import {
   getTabletYesIds,
   loadInterviewSelection,
@@ -104,6 +105,7 @@ export default function InterviewSelectionPage() {
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-3">
+            <InterviewRoleSwitcher />
             <span className="hidden text-sm text-[var(--clinical-on-surface-variant)] lg:inline">
               <span className="font-semibold text-[var(--clinical-on-surface)]">
                 {selectedIds.size}
