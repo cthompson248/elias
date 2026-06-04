@@ -39,6 +39,8 @@ export interface ScreeningQuestionFlow {
   followUps: FollowUpQuestion[];
   /** B5: GSBD hazardous activity lookup instead of pill follow-ups */
   hazardousActivity?: boolean;
+  /** C14: GSBD sexual contact lookup from notes below the question */
+  sexualContactGuidance?: boolean;
 }
 
 export interface InterviewQuestion {

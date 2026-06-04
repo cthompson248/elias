@@ -429,6 +429,18 @@ export const lifebloodScreeningFlows: Record<string, ScreeningQuestionFlow> = {
       },
     ],
   },
+
+  c14: {
+    section: "SECTION C",
+    questionNumber: "C14",
+    question:
+      'Have you engaged in sexual activity with someone who has ever "used drugs" by injection or been injected, even once, with drugs not prescribed by a doctor or dentist?',
+    donorResponse: "yes",
+    sexualContactGuidance: true,
+    flagReason:
+      "Sexual contact with a person who has injected non-prescribed drugs may require a restricted donation pathway.",
+    followUps: [],
+  },
 };
 
 export const lifebloodClinicalInsights: Record<
@@ -517,6 +529,11 @@ export const lifebloodClinicalInsights: Record<
     title: "Flagged: C8 Multiple partners",
     body: "Assess window-period risk. C8a anal sex response may extend deferral requirements.",
     reference: "Sexual behaviour risk policy · WI-00037 WK",
+  },
+  c14: {
+    title: "Flagged: C14 Sexual contact",
+    body: "Add notes below the question and press Enter to load GSBD guidance.",
+    reference: "GSBD — Sexual activity deferrals",
   },
   c11: {
     title: "Flagged: C11 Tattoo / piercing / acupuncture",

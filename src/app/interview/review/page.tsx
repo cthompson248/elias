@@ -25,6 +25,12 @@ import {
 } from "../HazardousActivityGuidance";
 import { lookupHazardousActivity } from "../hazardous-activities";
 import {
+  buildC14ClinicalInsight,
+  SexualContactGuidance,
+  type SexualContactGuidanceState,
+} from "../SexualContactGuidance";
+import { lookupSexualContactGuidance } from "../sexual-contact-guidance";
+import {
   getAllInterviewQuestions,
   getSessionReviewQueueIds,
 } from "../session";
@@ -73,6 +79,12 @@ export default function InterviewReviewPage() {
     lookupAttempted: false,
     donorDecision: null,
   });
+  const [c14GuidanceState, setC14GuidanceState] =
+    useState<SexualContactGuidanceState>({
+      matchedId: null,
+      lookupAttempted: false,
+      partnerIsLifebloodDonor: null,
+    });
 
   useEffect(() => {
     if (reviewQueueIds.size === 0) {
@@ -99,9 +111,14 @@ export default function InterviewReviewPage() {
           b5HazardousState.matchedId,
           b5HazardousState.donorDecision
         )
-      : activeFlowKey
-        ? clinicalInsightByFlow[activeFlowKey]
-        : null;
+      : activeFlowKey === "c14"
+        ? buildC14ClinicalInsight(
+            c14GuidanceState.matchedId,
+            c14GuidanceState.partnerIsLifebloodDonor
+          )
+        : activeFlowKey
+          ? clinicalInsightByFlow[activeFlowKey]
+          : null;
   const donorResponse = questionResponses[activeItemId] ?? null;
   const activeFollowUps = activeFlowKey
     ? (followUpAnswers[activeFlowKey] ?? {})
@@ -109,6 +126,8 @@ export default function InterviewReviewPage() {
   const notes = notesByQuestion[activeItemId] ?? "";
 
   const showDeferralNote =
+    (activeFlowKey === "c14" &&
+      c14GuidanceState.partnerIsLifebloodDonor === false) ||
     (activeFlowKey === "b5" && b5HazardousState.donorDecision === "defer") ||
     (donorResponse === "yes" &&
     (activeFlowKey === "b6"
@@ -309,6 +328,13 @@ export default function InterviewReviewPage() {
                     donorDecision: null,
                   });
                 }
+                if (activeFlowKey === "c14") {
+                  setC14GuidanceState({
+                    matchedId: null,
+                    lookupAttempted: false,
+                    partnerIsLifebloodDonor: null,
+                  });
+                }
               }}
               hazardousActivityState={
                 activeFlowKey === "b5" ? b5HazardousState : undefined
@@ -323,6 +349,23 @@ export default function InterviewReviewPage() {
               }}
               onHazardousDonorDecision={(decision) =>
                 setB5HazardousState((prev) => ({ ...prev, donorDecision: decision }))
+              }
+              sexualContactGuidanceState={
+                activeFlowKey === "c14" ? c14GuidanceState : undefined
+              }
+              onSexualContactLookupFromNotes={(noteText) => {
+                const match = lookupSexualContactGuidance(noteText);
+                setC14GuidanceState({
+                  matchedId: match?.id ?? null,
+                  lookupAttempted: true,
+                  partnerIsLifebloodDonor: null,
+                });
+              }}
+              onPartnerLifebloodDonorChange={(value) =>
+                setC14GuidanceState((prev) => ({
+                  ...prev,
+                  partnerIsLifebloodDonor: value,
+                }))
               }
             />
           ) : activeQuestion ? (
@@ -622,6 +665,9 @@ function ScreeningDetailPanel({
   hazardousActivityState,
   onHazardousLookupFromNotes,
   onHazardousDonorDecision,
+  sexualContactGuidanceState,
+  onSexualContactLookupFromNotes,
+  onPartnerLifebloodDonorChange,
 }: {
   flow: ScreeningQuestionFlow;
   questionCode?: string;
@@ -639,6 +685,9 @@ function ScreeningDetailPanel({
   onHazardousDonorDecision?: (
     decision: HazardousActivityState["donorDecision"]
   ) => void;
+  sexualContactGuidanceState?: SexualContactGuidanceState;
+  onSexualContactLookupFromNotes?: (noteText: string) => void;
+  onPartnerLifebloodDonorChange?: (value: boolean) => void;
 }) {
   const followUpTrigger = flow.followUpTrigger ?? flow.donorResponse;
   const showFollowUps = donorResponse === followUpTrigger;
@@ -648,6 +697,12 @@ function ScreeningDetailPanel({
     hazardousActivityState &&
     onHazardousLookupFromNotes &&
     onHazardousDonorDecision;
+  const showSexualContactFlow =
+    flow.sexualContactGuidance &&
+    donorResponse === "yes" &&
+    sexualContactGuidanceState &&
+    onSexualContactLookupFromNotes;
+  const usesContextNotesBelowQuestion = showHazardousFlow || showSexualContactFlow;
 
   return (
     <div
@@ -676,7 +731,41 @@ function ScreeningDetailPanel({
         </div>
       </div>
 
-      {showFollowUps && !flow.hazardousActivity && (
+      {showSexualContactFlow && (
+        <>
+          <section className="mt-6">
+            <h2 className="text-base font-semibold text-[var(--clinical-on-surface)]">
+              Notes
+            </h2>
+            <textarea
+              value={notes}
+              onChange={(e) => onNotesChange(e.target.value)}
+              onKeyDown={(e) => {
+                if (
+                  e.key === "Enter" &&
+                  !e.shiftKey &&
+                  onSexualContactLookupFromNotes
+                ) {
+                  e.preventDefault();
+                  onSexualContactLookupFromNotes(e.currentTarget.value);
+                }
+              }}
+              placeholder="Record any additional observations or verbal clarifications..."
+              rows={4}
+              className="mt-3 w-full resize-none rounded-xl border border-[var(--clinical-outline)] bg-[var(--clinical-surface)] px-4 py-3 text-sm leading-6 outline-none placeholder:text-[#727783] focus:border-[var(--clinical-primary)] focus:bg-white focus:ring-2 focus:ring-[var(--clinical-primary)]/20"
+            />
+          </section>
+          <SexualContactGuidance
+            state={sexualContactGuidanceState}
+            activityNotes={notes}
+            onPartnerLifebloodDonorChange={
+              onPartnerLifebloodDonorChange ?? (() => {})
+            }
+          />
+        </>
+      )}
+
+      {showFollowUps && !flow.hazardousActivity && !flow.sexualContactGuidance && (
         <>
           <div className="mt-6 flex gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
             <InfoIcon className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" />
@@ -732,33 +821,49 @@ function ScreeningDetailPanel({
         </div>
       )}
 
-      <section className="mt-8">
-        <h2 className="text-base font-semibold text-[var(--clinical-on-surface)]">
-          Notes
-        </h2>
-        <textarea
-          value={notes}
-          onChange={(e) => onNotesChange(e.target.value)}
-          onKeyDown={(e) => {
-            if (
-              e.key === "Enter" &&
-              !e.shiftKey &&
-              showHazardousFlow &&
-              onHazardousLookupFromNotes
-            ) {
-              e.preventDefault();
-              onHazardousLookupFromNotes(e.currentTarget.value);
+      {!usesContextNotesBelowQuestion && (
+        <section className="mt-8">
+          <h2 className="text-base font-semibold text-[var(--clinical-on-surface)]">
+            Notes
+          </h2>
+          <textarea
+            value={notes}
+            onChange={(e) => onNotesChange(e.target.value)}
+            placeholder={
+              donorResponse === "no"
+                ? "Add any additional context for this negative response…"
+                : "Record any additional observations or verbal clarifications..."
             }
-          }}
-          placeholder={
-            donorResponse === "no"
-              ? "Add any additional context for this negative response…"
-              : "Record any additional observations or verbal clarifications..."
-          }
-          rows={5}
-          className="mt-3 w-full resize-none rounded-xl border border-[var(--clinical-outline)] bg-[var(--clinical-surface)] px-4 py-3 text-sm leading-6 outline-none placeholder:text-[#727783] focus:border-[var(--clinical-primary)] focus:bg-white focus:ring-2 focus:ring-[var(--clinical-primary)]/20"
-        />
-      </section>
+            rows={5}
+            className="mt-3 w-full resize-none rounded-xl border border-[var(--clinical-outline)] bg-[var(--clinical-surface)] px-4 py-3 text-sm leading-6 outline-none placeholder:text-[#727783] focus:border-[var(--clinical-primary)] focus:bg-white focus:ring-2 focus:ring-[var(--clinical-primary)]/20"
+          />
+        </section>
+      )}
+
+      {showHazardousFlow && (
+        <section className="mt-8">
+          <h2 className="text-base font-semibold text-[var(--clinical-on-surface)]">
+            Notes
+          </h2>
+          <textarea
+            value={notes}
+            onChange={(e) => onNotesChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (
+                e.key === "Enter" &&
+                !e.shiftKey &&
+                onHazardousLookupFromNotes
+              ) {
+                e.preventDefault();
+                onHazardousLookupFromNotes(e.currentTarget.value);
+              }
+            }}
+            placeholder="Record any additional observations or verbal clarifications..."
+            rows={5}
+            className="mt-3 w-full resize-none rounded-xl border border-[var(--clinical-outline)] bg-[var(--clinical-surface)] px-4 py-3 text-sm leading-6 outline-none placeholder:text-[#727783] focus:border-[var(--clinical-primary)] focus:bg-white focus:ring-2 focus:ring-[var(--clinical-primary)]/20"
+          />
+        </section>
+      )}
 
       {showHazardousFlow && (
         <HazardousActivityGuidance

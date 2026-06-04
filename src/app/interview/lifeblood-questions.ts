@@ -312,6 +312,8 @@ export const lifebloodQuestionBank: QuestionBankEntry[] = [
     "C14",
     C,
     'Have you engaged in sexual activity with someone who has ever "used drugs" by injection or been injected, even once, with drugs not prescribed by a doctor or dentist?',
-    "no"
+    "yes",
+    "clarify",
+    "c14"
   ),
 ];
