@@ -807,20 +807,6 @@ function ScreeningDetailPanel({
         </>
       )}
 
-      {showHazardousFlow && (
-        <div className="mt-6 flex gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
-          <InfoIcon className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" />
-          <div>
-            <p className="text-sm font-semibold text-blue-900">
-              Why this is flagged
-            </p>
-            <p className="mt-1 text-sm leading-6 text-blue-800">
-              {flow.flagReason}
-            </p>
-          </div>
-        </div>
-      )}
-
       {!usesContextNotesBelowQuestion && (
         <section className="mt-8">
           <h2 className="text-base font-semibold text-[var(--clinical-on-surface)]">
