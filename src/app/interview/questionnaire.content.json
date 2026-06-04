@@ -2,6 +2,8 @@
   "source": "Lifeblood Donor Questionnaire (paper form Sections A, B, C)",
   "maintainedIn": {
     "screeningQuestions": "lifeblood-questions.ts",
+    "wiDirectionsAndEscalation": "lifeblood-directions.ts",
+    "escalationLabels": "escalation.ts",
     "interviewFollowUps": "lifeblood-flows.ts"
   },
   "notes": {

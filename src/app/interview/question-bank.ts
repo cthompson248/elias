@@ -1,17 +1,18 @@
-import type { InterviewQuestion, QuestionReviewStatus } from "./data";
+import type { EscalationLevel, InterviewQuestion, QuestionReviewStatus } from "./data";
 import type { DonorScreeningResponse } from "./data";
 import { lifebloodQuestionBank } from "./lifeblood-questions";
 
 export interface QuestionBankEntry {
   id: string;
-  /** Short code shown to nurses, e.g. B6, C7 */
   code: string;
+  emqCode: string;
   category: string;
   question: string;
   reviewStatus: QuestionReviewStatus;
+  escalation: EscalationLevel;
   tabletResponse: DonorScreeningResponse | null;
-  /** Links to lifeblood-flows.ts when interview follow-ups exist */
   flowKey?: string;
+  wiDirection?: string;
 }
 
 /** Lifeblood donor questionnaire — Sections A, B, C (47 Yes/No questions) */
@@ -21,11 +22,14 @@ export function questionBankToInterview(entry: QuestionBankEntry): InterviewQues
   return {
     id: entry.id,
     code: entry.code,
+    emqCode: entry.emqCode,
     category: entry.category,
     question: entry.question,
     reviewStatus: entry.reviewStatus,
+    escalation: entry.escalation,
     tabletResponse: entry.tabletResponse,
     flowKey: entry.flowKey,
+    wiDirection: entry.wiDirection,
   };
 }
 

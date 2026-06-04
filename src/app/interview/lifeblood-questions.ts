@@ -6,6 +6,7 @@
 
 import type { DonorScreeningResponse, QuestionReviewStatus } from "./data";
 import type { QuestionBankEntry } from "./question-bank";
+import { questionDirections } from "./lifeblood-directions";
 
 const A = "Section A · New & returned donors";
 const B = "Section B · Medical questionnaire";
@@ -19,14 +20,19 @@ function entry(
   status: QuestionReviewStatus = "pending",
   flowKey?: string
 ): QuestionBankEntry {
+  const id = code.toLowerCase();
+  const dir = questionDirections[id];
   return {
-    id: code.toLowerCase(),
+    id,
     code,
+    emqCode: dir?.emqCode ?? code,
     category,
     question,
     tabletResponse: tablet,
     reviewStatus: status,
+    escalation: dir?.escalation ?? "dsna",
     flowKey,
+    wiDirection: dir?.direction,
   };
 }
 
@@ -46,7 +52,9 @@ export const lifebloodQuestionBank: QuestionBankEntry[] = [
     "A3",
     A,
     "Ever had anaemia or a blood disorder, or a serious illness, operation or hospital admission?",
-    "no"
+    "yes",
+    "clarify",
+    "a3"
   ),
   entry(
     "A4",
@@ -114,7 +122,7 @@ export const lifebloodQuestionBank: QuestionBankEntry[] = [
   ),
 
   // —— Section B (B4 weight omitted — free text on paper form) ——
-  entry("B1", B, "Are you feeling healthy and well?", "yes", "ok"),
+  entry("B1", B, "Are you feeling healthy and well?", "no", "clarify", "b1"),
   entry(
     "B2",
     B,
@@ -123,7 +131,7 @@ export const lifebloodQuestionBank: QuestionBankEntry[] = [
     "pending",
     "b2"
   ),
-  entry("B3", B, "Are you allergic to the antiseptic chlorhexidine?", "no"),
+  entry("B3", B, "Are you allergic to the antiseptic chlorhexidine?", "yes", "clarify", "b3"),
   entry(
     "B5",
     B,
@@ -148,7 +156,9 @@ export const lifebloodQuestionBank: QuestionBankEntry[] = [
     "B8",
     B,
     "Since last donation (or last 12 months if new): unwell, seen a health practitioner, tests, or surgery?",
-    "no"
+    "yes",
+    "clarify",
+    "b8"
   ),
   entry(
     "B9",
@@ -166,7 +176,9 @@ export const lifebloodQuestionBank: QuestionBankEntry[] = [
     "B11",
     B,
     "Since last donation (or last 12 months if new): sexually transmitted infection (e.g. syphilis, gonorrhoea, genital herpes)?",
-    "no"
+    "yes",
+    "clarify",
+    "b11"
   ),
   entry(
     "B12",
@@ -180,7 +192,9 @@ export const lifebloodQuestionBank: QuestionBankEntry[] = [
     "B13",
     B,
     "Since last donation (or last 12 months if new): PrEP for HIV, or injectable medications?",
-    "no"
+    "no",
+    "pending",
+    "b13"
   ),
   entry(
     "B14",

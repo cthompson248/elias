@@ -19,6 +19,14 @@ import {
   type ScreeningQuestionFlow,
 } from "../data";
 import { getSessionInterviewQuestions } from "../session";
+import {
+  blocksDsna,
+  canDsnaEdit,
+  escalationMeta,
+  requiresNurseConsult,
+  resolveInterviewEscalation,
+  type EscalationLevel,
+} from "../escalation";
 
 type FollowUpAnswer = { pillId: string | null; custom: string };
 
@@ -43,6 +51,12 @@ export default function InterviewReviewPage() {
     Record<string, Record<string, FollowUpAnswer>>
   >({});
   const [notesByQuestion, setNotesByQuestion] = useState<Record<string, string>>(
+    {}
+  );
+  const [nurseConsultCleared, setNurseConsultCleared] = useState<
+    Record<string, boolean>
+  >({});
+  const [nurseTakeover, setNurseTakeover] = useState<Record<string, boolean>>(
     {}
   );
 
@@ -76,12 +90,45 @@ export default function InterviewReviewPage() {
   const showDeferralNote =
     donorResponse === "yes" &&
     (activeFlowKey === "b6"
-      ? activeFollowUps.nsaids?.pillId === "yes"
+      ? ["yes-once", "ongoing", "prescribed", "not-in-notes"].includes(
+          activeFollowUps.nsaids?.pillId ?? ""
+        )
       : activeFlowKey === "c11"
         ? Boolean(activeFollowUps.procedure?.pillId)
         : activeFlowKey === "a15"
           ? activeFollowUps.a15a?.pillId === "yes"
           : false);
+
+  const effectiveEscalation: EscalationLevel = activeQuestion
+    ? resolveInterviewEscalation(
+        activeQuestion.escalation,
+        activeFlow?.followUps ?? [],
+        activeFollowUps,
+        Boolean(nurseTakeover[activeItemId])
+      )
+    : "dsna";
+
+  const consultCleared = Boolean(nurseConsultCleared[activeItemId]);
+  const dsnaCanEdit = canDsnaEdit(effectiveEscalation, consultCleared);
+
+  useEffect(() => {
+    if (!activeQuestion || !activeFlow) return;
+    const level = resolveInterviewEscalation(
+      activeQuestion.escalation,
+      activeFlow.followUps,
+      activeFollowUps,
+      false
+    );
+    if (level === "nurse_takeover" && !nurseTakeover[activeItemId]) {
+      setNurseTakeover((prev) => ({ ...prev, [activeItemId]: true }));
+    }
+  }, [
+    activeQuestion,
+    activeFlow,
+    activeFollowUps,
+    activeItemId,
+    nurseTakeover,
+  ]);
 
   function setQuestionResponse(
     questionId: string,
@@ -228,8 +275,12 @@ export default function InterviewReviewPage() {
           ) : activeFlow && activeFlowKey ? (
             <ScreeningDetailPanel
               flow={activeFlow}
+              emqCode={activeQuestion?.emqCode}
               questionCode={activeQuestion?.code}
+              escalation={effectiveEscalation}
+              wiDirection={activeQuestion?.wiDirection}
               donorResponse={donorResponse}
+              readOnly={!dsnaCanEdit}
               onDonorResponseChange={(response) =>
                 setQuestionResponse(activeItemId, response)
               }
@@ -247,12 +298,31 @@ export default function InterviewReviewPage() {
                   [activeItemId]: value,
                 }))
               }
+              consultCleared={consultCleared}
+              onConsultNurse={() =>
+                setNurseConsultCleared((prev) => ({
+                  ...prev,
+                  [activeItemId]: true,
+                }))
+              }
+              onHandToNurse={() =>
+                setNurseTakeover((prev) => ({ ...prev, [activeItemId]: true }))
+              }
+              onDoctorHotline={() => {
+                window.alert(
+                  "Prototype: Doctor / DEL hotline would be dialled per site protocol."
+                );
+              }}
             />
           ) : activeQuestion ? (
             <div className="flex flex-1 flex-col overflow-y-auto bg-white px-8 py-8">
               <p className="text-xs font-semibold uppercase tracking-wider text-[#727783]">
+                {activeQuestion.emqCode} · {activeQuestion.code} ·{" "}
                 {activeQuestion.category}
               </p>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <EscalationBadge level={activeQuestion.escalation} />
+              </div>
               <div className="mt-2 flex items-center justify-between gap-6">
                 <h1 className="min-w-0 flex-1 font-[family-name:var(--font-public-sans)] text-2xl font-semibold leading-tight">
                   {activeQuestion.question}
@@ -272,10 +342,11 @@ export default function InterviewReviewPage() {
                   />
                 </div>
               </div>
-              <p className="mt-8 text-sm text-[var(--clinical-on-surface-variant)]">
-                Select a question with follow-up detail from the checklist, or
-                record the donor&apos;s response above.
-              </p>
+              {activeQuestion.wiDirection && (
+                <p className="mt-6 text-sm leading-6 text-[var(--clinical-on-surface-variant)]">
+                  {activeQuestion.wiDirection}
+                </p>
+              )}
             </div>
           ) : (
             <div className="flex flex-1 items-center justify-center p-8 text-sm text-[var(--clinical-on-surface-variant)]">
@@ -293,10 +364,29 @@ export default function InterviewReviewPage() {
           </div>
 
           <div className="px-4 pb-6">
+            {activeQuestion && (
+              <div className="mb-4 px-1">
+                <EscalationBadge level={effectiveEscalation} />
+                {activeQuestion.wiDirection && (
+                  <p className="mt-3 rounded-lg bg-white px-3 py-2.5 text-xs leading-5 text-[var(--clinical-on-surface-variant)] ring-1 ring-[var(--clinical-outline)]">
+                    <span className="font-semibold text-[var(--clinical-on-surface)]">
+                      WI-00037:{" "}
+                    </span>
+                    {activeQuestion.wiDirection}
+                  </p>
+                )}
+              </div>
+            )}
+
             {clinicalInsight ? (
               <article className="rounded-xl border border-[var(--clinical-outline)] border-l-4 border-l-[var(--clinical-secondary)] bg-white p-4">
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--clinical-secondary)]">
                   Analysis
+                  {activeQuestion && (
+                    <span className="ml-2 font-mono normal-case text-[#727783]">
+                      {activeQuestion.emqCode} · {activeQuestion.code}
+                    </span>
+                  )}
                 </p>
                 <p className="mt-2 font-[family-name:var(--font-public-sans)] text-base font-semibold">
                   {clinicalInsight.title}
@@ -454,9 +544,12 @@ function ChecklistQuestionCard({
         )}
       </div>
 
-      <p className="mt-2 font-mono text-xs font-bold tracking-wide text-[var(--clinical-primary)]">
-        {question.code}
-      </p>
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        <p className="font-mono text-xs font-bold tracking-wide text-[var(--clinical-primary)]">
+          {question.emqCode} · {question.code}
+        </p>
+        <EscalationBadge level={question.escalation} compact />
+      </div>
       <p className="mt-1 text-sm font-semibold leading-snug text-[var(--clinical-on-surface)]">
         {question.question}
       </p>
@@ -523,30 +616,64 @@ function ReviewStatusBadge({ status }: { status: QuestionReviewStatus }) {
 
 function ScreeningDetailPanel({
   flow,
+  emqCode,
   questionCode,
+  escalation,
+  wiDirection,
   donorResponse,
+  readOnly,
   onDonorResponseChange,
   followUpAnswers,
   onSelectPill,
   onCustomChange,
   notes,
   onNotesChange,
+  consultCleared,
+  onConsultNurse,
+  onHandToNurse,
+  onDoctorHotline,
 }: {
   flow: ScreeningQuestionFlow;
+  emqCode?: string;
   questionCode?: string;
+  escalation: EscalationLevel;
+  wiDirection?: string;
   donorResponse: DonorScreeningResponse | null;
+  readOnly: boolean;
   onDonorResponseChange: (response: DonorScreeningResponse) => void;
   followUpAnswers: Record<string, FollowUpAnswer>;
   onSelectPill: (followUpId: string, pillId: string | null) => void;
   onCustomChange: (followUpId: string, custom: string) => void;
   notes: string;
   onNotesChange: (value: string) => void;
+  consultCleared: boolean;
+  onConsultNurse: () => void;
+  onHandToNurse: () => void;
+  onDoctorHotline: () => void;
 }) {
+  const followUpTrigger = flow.followUpTrigger ?? flow.donorResponse;
+  const showFollowUps = donorResponse === followUpTrigger;
+
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto bg-white px-8 py-8">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+      <EscalationActionBar
+        escalation={escalation}
+        consultCleared={consultCleared}
+        onConsultNurse={onConsultNurse}
+        onHandToNurse={onHandToNurse}
+        onDoctorHotline={onDoctorHotline}
+      />
+
+      <div
+        className={`min-h-0 flex-1 overflow-y-auto bg-white px-8 py-8 ${readOnly ? "pointer-events-none opacity-60" : ""}`}
+      >
       <p className="text-xs font-semibold uppercase tracking-wider text-[#727783]">
+        {emqCode && `${emqCode} · `}
         {questionCode ?? flow.questionNumber} · {flow.section}
       </p>
+      <div className="mt-2">
+        <EscalationBadge level={escalation} />
+      </div>
       <div className="mt-2 flex items-center justify-between gap-6">
         <h1 className="min-w-0 flex-1 font-[family-name:var(--font-public-sans)] text-2xl font-semibold leading-tight text-[var(--clinical-on-surface)]">
           {flow.question}
@@ -567,7 +694,29 @@ function ScreeningDetailPanel({
         </div>
       </div>
 
-      {donorResponse === "yes" && (
+      {wiDirection && (
+        <p className="mt-4 text-sm leading-6 text-[var(--clinical-on-surface-variant)]">
+          <span className="font-semibold text-[var(--clinical-on-surface)]">
+            WI-00037:{" "}
+          </span>
+          {wiDirection}
+        </p>
+      )}
+
+      {blocksDsna(escalation) && (
+        <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
+          Nurse has taken over this question — DSNA responses are locked.
+        </div>
+      )}
+
+      {!consultCleared && requiresNurseConsult(escalation) && !blocksDsna(escalation) && (
+        <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          Nurse consult required before DSNA can complete this item. Use{" "}
+          <span className="font-semibold">Mark nurse consulted</span> when cleared.
+        </div>
+      )}
+
+      {showFollowUps && (
         <>
           <div className="mt-6 flex gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
             <InfoIcon className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" />
@@ -600,6 +749,7 @@ function ScreeningDetailPanel({
                   onCustomChange={(custom) =>
                     onCustomChange(followUp.id, custom)
                   }
+                  readOnly={readOnly}
                 />
               ))}
             </div>
@@ -623,6 +773,86 @@ function ScreeningDetailPanel({
           className="mt-3 w-full resize-none rounded-xl border border-[var(--clinical-outline)] bg-[var(--clinical-surface)] px-4 py-3 text-sm leading-6 outline-none placeholder:text-[#727783] focus:border-[var(--clinical-primary)] focus:bg-white focus:ring-2 focus:ring-[var(--clinical-primary)]/20"
         />
       </section>
+      </div>
+    </div>
+  );
+}
+
+function EscalationBadge({
+  level,
+  compact = false,
+}: {
+  level: EscalationLevel;
+  compact?: boolean;
+}) {
+  const meta = escalationMeta[level];
+  return (
+    <span
+      className={`inline-flex items-center rounded-full border font-semibold ${meta.className} ${
+        compact ? "px-2 py-0.5 text-[10px]" : "px-2.5 py-0.5 text-[11px]"
+      }`}
+    >
+      {meta.shortLabel}
+    </span>
+  );
+}
+
+function EscalationActionBar({
+  escalation,
+  consultCleared,
+  onConsultNurse,
+  onHandToNurse,
+  onDoctorHotline,
+}: {
+  escalation: EscalationLevel;
+  consultCleared: boolean;
+  onConsultNurse: () => void;
+  onHandToNurse: () => void;
+  onDoctorHotline: () => void;
+}) {
+  const meta = escalationMeta[escalation];
+  const needsConsult =
+    requiresNurseConsult(escalation) && !consultCleared && !blocksDsna(escalation);
+
+  return (
+    <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-[var(--clinical-outline)] bg-[var(--clinical-surface)] px-6 py-3">
+      <span
+        className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${meta.className}`}
+      >
+        {meta.label}
+      </span>
+      <div className="ml-auto flex flex-wrap gap-2">
+        {needsConsult && (
+          <button
+            type="button"
+            onClick={onConsultNurse}
+            className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-900 hover:bg-amber-100"
+          >
+            Mark nurse consulted
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={onConsultNurse}
+          className="rounded-lg border border-[var(--clinical-outline)] bg-white px-3 py-1.5 text-xs font-semibold text-[var(--clinical-on-surface)] hover:bg-white/80"
+        >
+          Consult nurse
+        </button>
+        <button
+          type="button"
+          onClick={onHandToNurse}
+          className="rounded-lg border border-rose-300 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-900 hover:bg-rose-100"
+        >
+          Hand to nurse
+        </button>
+        <button
+          type="button"
+          onClick={onDoctorHotline}
+          className="rounded-lg bg-[var(--clinical-primary)] px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90"
+        >
+          Doctor / DEL hotline
+        </button>
+      </div>
     </div>
   );
 }
@@ -674,11 +904,13 @@ function FollowUpQuestionCard({
   answer,
   onSelectPill,
   onCustomChange,
+  readOnly = false,
 }: {
   followUp: FollowUpQuestion;
   answer: FollowUpAnswer;
   onSelectPill: (pillId: string | null) => void;
   onCustomChange: (custom: string) => void;
+  readOnly?: boolean;
 }) {
   const isComplete = Boolean(answer.pillId || answer.custom.trim());
 
@@ -701,6 +933,7 @@ function FollowUpQuestionCard({
             <p className="text-sm font-semibold leading-snug text-[var(--clinical-on-surface)]">
               {followUp.question}
             </p>
+            <EscalationBadge level={followUp.escalation} compact />
             {isComplete && (
               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white">
                 <CheckIcon className="h-3.5 w-3.5" />
@@ -716,6 +949,7 @@ function FollowUpQuestionCard({
                   key={opt.id}
                   type="button"
                   aria-pressed={selected}
+                  disabled={readOnly}
                   onClick={() => onSelectPill(selected ? null : opt.id)}
                   className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
                     selected
@@ -732,6 +966,7 @@ function FollowUpQuestionCard({
 
           <textarea
             value={answer.custom}
+            disabled={readOnly}
             onChange={(e) => onCustomChange(e.target.value)}
             placeholder="Or type a custom response..."
             rows={2}

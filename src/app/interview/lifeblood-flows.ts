@@ -13,11 +13,41 @@ export const lifebloodScreeningFlows: Record<string, ScreeningQuestionFlow> = {
       {
         id: "a1a",
         question: "Where and when did you previously donate?",
+        escalation: "dsna",
         quickOptions: [
           { id: "lifeblood", label: "Australian Red Cross Lifeblood" },
           { id: "other-au", label: "Other Australian centre" },
           { id: "overseas", label: "Overseas" },
           { id: "unknown", label: "Donor unsure — see notes" },
+        ],
+      },
+    ],
+  },
+
+  a3: {
+    section: "SECTION A",
+    questionNumber: "A3",
+    question:
+      "Ever had anaemia or a blood disorder, or a serious illness, operation or hospital admission?",
+    donorResponse: "yes",
+    flagReason:
+      "DSNA may only continue for WI allow-listed scenarios; otherwise consult a nurse.",
+    followUps: [
+      {
+        id: "a3-scenario",
+        question: "Which scenario best describes the donor's history?",
+        escalation: "dsna_if_allowed",
+        consultOnPillIds: ["other", "unsure"],
+        quickOptions: [
+          { id: "iron-b12", label: "Resolved iron / B12 deficiency" },
+          { id: "g6pd", label: "G6PD deficiency" },
+          { id: "surgery-ok", label: "Defined surgery — recovered per GSBD" },
+          { id: "minor-injury", label: "Minor injury — fully recovered" },
+          { id: "respiratory", label: "Cold / flu / COVID — resolved" },
+          { id: "routine", label: "Routine check — no ongoing issue" },
+          { id: "repeat-med", label: "Repeat medication — unchanged" },
+          { id: "other", label: "Other — not on allow list" },
+          { id: "unsure", label: "Donor unsure" },
         ],
       },
     ],
@@ -33,10 +63,33 @@ export const lifebloodScreeningFlows: Record<string, ScreeningQuestionFlow> = {
       {
         id: "a15a",
         question: "Have you been in Papua New Guinea (PNG) in the last 3 years?",
+        escalation: "dsna",
         quickOptions: [
           { id: "yes", label: "Yes" },
           { id: "no", label: "No" },
           { id: "unsure", label: "Donor unsure" },
+        ],
+      },
+    ],
+  },
+
+  b1: {
+    section: "SECTION B",
+    questionNumber: "B1",
+    question: "Are you feeling healthy and well?",
+    donorResponse: "no",
+    followUpTrigger: "no",
+    flagReason:
+      "If the donor is unwell or has a medication side effect, consult a nurse before proceeding.",
+    followUps: [
+      {
+        id: "b1-reason",
+        question: "Why is the donor not feeling healthy and well?",
+        escalation: "consult_nurse",
+        quickOptions: [
+          { id: "unwell", label: "Feeling unwell today" },
+          { id: "med-side-effect", label: "Medication side effect" },
+          { id: "other", label: "Other concern" },
         ],
       },
     ],
@@ -49,16 +102,39 @@ export const lifebloodScreeningFlows: Record<string, ScreeningQuestionFlow> = {
       "Did you have any side effects after leaving the donor centre after your last donation?",
     donorResponse: "yes",
     flagReason:
-      "Prior adverse events may affect eligibility or require medical review.",
+      "Prior adverse events may affect eligibility. Confirm whether reported to Lifeblood (B2a).",
     followUps: [
       {
         id: "b2a",
-        question:
-          "Did you report this to Australian Red Cross Lifeblood?",
+        question: "Did you report this to Australian Red Cross Lifeblood?",
+        escalation: "dsna",
+        takeoverOnPillIds: ["no"],
         quickOptions: [
           { id: "yes", label: "Yes — reported to Lifeblood" },
           { id: "no", label: "No — not reported" },
           { id: "first", label: "First donation — not applicable" },
+        ],
+      },
+    ],
+  },
+
+  b3: {
+    section: "SECTION B",
+    questionNumber: "B3",
+    question: "Are you allergic to the antiseptic chlorhexidine?",
+    donorResponse: "yes",
+    flagReason:
+      "Consult nurse if allergy not in Medical Notes. Nurse takeover if history of anaphylaxis.",
+    followUps: [
+      {
+        id: "b3-allergy",
+        question: "Describe the chlorhexidine allergy",
+        escalation: "consult_nurse",
+        takeoverOnPillIds: ["anaphylaxis"],
+        quickOptions: [
+          { id: "mild", label: "Mild reaction — known to Lifeblood" },
+          { id: "not-recorded", label: "Not previously recorded" },
+          { id: "anaphylaxis", label: "History of anaphylaxis" },
         ],
       },
     ],
@@ -71,11 +147,14 @@ export const lifebloodScreeningFlows: Record<string, ScreeningQuestionFlow> = {
       "In the last week: dental work, aspirin/pain killers/anti-inflammatories, or cuts/abrasions/sores/rashes?",
     donorResponse: "yes",
     flagReason:
-      "Dental work, NSAIDs and skin breaks can affect donation timing and product suitability.",
+      "Dental meds (not local anaesthetic), NSAIDs and skin breaks have distinct WI escalation paths.",
     followUps: [
       {
         id: "dental",
-        question: "Had dental work, cleaning, fillings or extractions in the last week?",
+        question:
+          "Had dental work, cleaning, fillings or extractions in the last week?",
+        escalation: "dsna",
+        consultOnPillIds: ["yes"],
         quickOptions: [
           { id: "yes", label: "Yes — dental work" },
           { id: "no", label: "No dental work" },
@@ -85,17 +164,93 @@ export const lifebloodScreeningFlows: Record<string, ScreeningQuestionFlow> = {
         id: "nsaids",
         question:
           "Taken aspirin, pain killers or anti-inflammatory preparations in the last week?",
+        escalation: "dsna",
+        consultOnPillIds: ["ongoing", "prescribed", "not-in-notes"],
         quickOptions: [
-          { id: "yes", label: "Yes — aspirin/NSAIDs" },
+          { id: "yes-once", label: "Yes — one-off / OTC" },
+          { id: "ongoing", label: "Yes — ongoing use" },
+          { id: "prescribed", label: "Yes — prescribed" },
+          { id: "not-in-notes", label: "Yes — not in Medical Notes" },
           { id: "no", label: "No" },
+        ],
+      },
+      {
+        id: "nsaid-what-for",
+        question: "If aspirin/NSAIDs: what was it taken for?",
+        escalation: "consult_nurse",
+        consultOnPillIds: ["ongoing-pain", "prescribed", "unknown"],
+        quickOptions: [
+          { id: "headache", label: "Headache / one-off pain" },
+          { id: "injury", label: "Recent injury" },
+          { id: "ongoing-pain", label: "Ongoing pain condition" },
+          { id: "prescribed", label: "Prescribed indication" },
+          { id: "unknown", label: "Donor unsure" },
+          { id: "na", label: "Not applicable" },
         ],
       },
       {
         id: "skin",
         question: "Had cuts, abrasions, sores or rashes in the last week?",
+        escalation: "dsna",
+        consultOnPillIds: ["significant", "infected"],
         quickOptions: [
-          { id: "yes", label: "Yes — cuts/sores/rashes" },
+          { id: "papercut", label: "Papercut / small scratch" },
+          { id: "significant", label: "Larger cut / abrasion / sore" },
+          { id: "infected", label: "Infected or weeping" },
           { id: "no", label: "No" },
+        ],
+      },
+    ],
+  },
+
+  b8: {
+    section: "SECTION B",
+    questionNumber: "B8",
+    question:
+      "Since last donation (or last 12 months if new): unwell, seen a health practitioner, tests, or surgery?",
+    donorResponse: "yes",
+    flagReason:
+      "DSNA may continue only for WI allow-listed scenarios (same as A3); otherwise consult nurse.",
+    followUps: [
+      {
+        id: "b8-scenario",
+        question: "Which scenario applies?",
+        escalation: "dsna_if_allowed",
+        consultOnPillIds: ["other", "unsure"],
+        quickOptions: [
+          { id: "iron-b12", label: "Resolved iron / B12 deficiency" },
+          { id: "respiratory", label: "Cold / flu / COVID — resolved" },
+          { id: "routine", label: "Routine check — no ongoing issue" },
+          { id: "repeat-med", label: "Repeat medication — unchanged" },
+          { id: "other", label: "Other — consult nurse" },
+          { id: "unsure", label: "Donor unsure" },
+        ],
+      },
+    ],
+  },
+
+  b11: {
+    section: "SECTION B",
+    questionNumber: "B11",
+    question:
+      "Since last donation (or last 12 months if new): sexually transmitted infection (e.g. syphilis, gonorrhoea, genital herpes)?",
+    donorResponse: "yes",
+    flagReason:
+      "Consult nurse if diagnosis unknown. Nurse takeover if diagnosis cannot be established (DEL).",
+    followUps: [
+      {
+        id: "b11-diagnosis",
+        question: "Is the STI diagnosis known and documented?",
+        escalation: "consult_nurse",
+        takeoverOnPillIds: ["unknown-del"],
+        quickOptions: [
+          { id: "known-treated", label: "Known diagnosis — treated per GSBD" },
+          { id: "known-active", label: "Known — may need deferral" },
+          { id: "unknown", label: "Diagnosis not known — consult nurse" },
+          {
+            id: "unknown-del",
+            label: "Cannot establish diagnosis — DEL / nurse takeover",
+          },
         ],
       },
     ],
@@ -108,18 +263,45 @@ export const lifebloodScreeningFlows: Record<string, ScreeningQuestionFlow> = {
       "Since last donation (or last 12 months if new): any medication including regular, trial, or acne/skin medications?",
     donorResponse: "yes",
     flagReason:
-      "Some medications (e.g. NSAIDs, antibiotics, acne treatments) affect eligibility or product type.",
+      "Identify medication class. Consult nurse for Medical Notes changes, oral acne meds, and several classes per WI.",
     followUps: [
       {
         id: "med-type",
         question: "What medication was taken and how recently?",
+        escalation: "dsna",
+        consultOnPillIds: ["notes-change", "acne-oral", "trial"],
         quickOptions: [
-          { id: "regular", label: "Regular prescription medication" },
+          { id: "regular", label: "Regular prescription — unchanged in notes" },
+          { id: "notes-change", label: "Change to regular meds in Medical Notes" },
           { id: "nsaid", label: "Aspirin / anti-inflammatory" },
           { id: "antibiotic", label: "Antibiotics" },
-          { id: "acne", label: "Acne or skin condition medication" },
+          { id: "acne-oral", label: "Oral acne / skin medication" },
           { id: "trial", label: "Clinical trial medication" },
           { id: "other", label: "Other — see notes" },
+        ],
+      },
+    ],
+  },
+
+  b13: {
+    section: "SECTION B",
+    questionNumber: "B13",
+    question:
+      "Since last donation (or last 12 months if new): PrEP for HIV, or injectable medications?",
+    donorResponse: "yes",
+    flagReason:
+      "Identify medication. Consult nurse if change to regular medication in Medical Notes.",
+    followUps: [
+      {
+        id: "b13-med",
+        question: "Which medication applies?",
+        escalation: "consult_nurse",
+        consultOnPillIds: ["notes-change", "injectable-other"],
+        quickOptions: [
+          { id: "prep", label: "PrEP for HIV" },
+          { id: "injectable-known", label: "Injectable — known in notes" },
+          { id: "notes-change", label: "New or changed — not in Medical Notes" },
+          { id: "injectable-other", label: "Other injectable" },
         ],
       },
     ],
@@ -131,11 +313,12 @@ export const lifebloodScreeningFlows: Record<string, ScreeningQuestionFlow> = {
     question:
       "Since last donation (or last 12 months if new): been pregnant (including miscarriage/termination)?",
     donorResponse: "yes",
-    flagReason: "Pregnancy history affects eligibility — confirm timing.",
+    flagReason: "Pregnancy history affects eligibility — confirm timing (B15a).",
     followUps: [
       {
         id: "b15a",
         question: "Have you been pregnant in the last 9 months?",
+        escalation: "dsna",
         quickOptions: [
           { id: "yes", label: "Yes" },
           { id: "no", label: "No" },
@@ -151,11 +334,12 @@ export const lifebloodScreeningFlows: Record<string, ScreeningQuestionFlow> = {
     question: "Since your last donation, have you been outside Australia?",
     donorResponse: "yes",
     flagReason:
-      "Overseas travel may require deferral. Confirm countries, dates and malaria-risk exposure.",
+      "Overseas travel may require deferral. Nurse assesses destinations and malaria risk.",
     followUps: [
       {
         id: "destinations",
         question: "Which countries or regions, and when?",
+        escalation: "consult_nurse",
         quickOptions: [
           { id: "malaria-risk", label: "Malaria-risk region" },
           { id: "png", label: "Papua New Guinea" },
@@ -169,8 +353,7 @@ export const lifebloodScreeningFlows: Record<string, ScreeningQuestionFlow> = {
   c7: {
     section: "SECTION C",
     questionNumber: "C7",
-    question:
-      "In the last 6 months, sex (excluding oral) with someone new?",
+    question: "In the last 6 months, sex (excluding oral) with someone new?",
     donorResponse: "yes",
     flagReason:
       "New partner sexual history may fall in a window-period risk category. Clarify with donor privately.",
@@ -178,6 +361,7 @@ export const lifebloodScreeningFlows: Record<string, ScreeningQuestionFlow> = {
       {
         id: "c7a",
         question: "Have you had anal sex in the last 3 months?",
+        escalation: "dsna",
         quickOptions: [
           { id: "yes", label: "Yes" },
           { id: "no", label: "No" },
@@ -199,6 +383,7 @@ export const lifebloodScreeningFlows: Record<string, ScreeningQuestionFlow> = {
       {
         id: "c8a",
         question: "Have you had anal sex in the last 3 months?",
+        escalation: "dsna",
         quickOptions: [
           { id: "yes", label: "Yes" },
           { id: "no", label: "No" },
@@ -219,7 +404,9 @@ export const lifebloodScreeningFlows: Record<string, ScreeningQuestionFlow> = {
     followUps: [
       {
         id: "procedure",
-        question: "What procedure, when, and was it at a licensed/regulated provider?",
+        question:
+          "What procedure, when, and was it at a licensed/regulated provider?",
+        escalation: "dsna",
         quickOptions: [
           { id: "tattoo", label: "Tattoo" },
           { id: "piercing", label: "Piercing" },
@@ -239,54 +426,84 @@ export const lifebloodClinicalInsights: Record<
   a1: {
     title: "Flagged: A1 Prior donation",
     body: "Verify prior donation history and any prior deferrals before proceeding.",
-    reference: "Donor Questionnaire Section A",
+    reference: "Donor Questionnaire Section A · WI-00037 AW",
+  },
+  a3: {
+    title: "Flagged: A3 Medical history",
+    body: "Use WI allow-list (JF). Consult nurse for scenarios outside the list.",
+    reference: "WI-00037 JF · GSBD",
   },
   a15: {
     title: "Flagged: A15 Recent travel",
     body: "Confirm destinations. PNG travel may require specific deferral assessment.",
-    reference: "Travel deferral matrix",
+    reference: "Travel deferral matrix · WI-00037 DR",
     deferralNote: "PNG in last 3 years — confirm against current travel policy.",
+  },
+  b1: {
+    title: "Flagged: B1 Feeling unwell",
+    body: "Consult nurse if underlying health concern or medication side effect.",
+    reference: "WI-00037 HA",
   },
   b2: {
     title: "Flagged: B2 Post-donation effects",
-    body: "Prior reactions may require nurse or medical review before proceeding.",
-    reference: "Adverse reaction protocol",
+    body: "If side effects not reported to Lifeblood (B2a No), nurse must take over.",
+    reference: "Adverse reaction protocol · WI-00037 9M",
+  },
+  b3: {
+    title: "Flagged: B3 Chlorhexidine allergy",
+    body: "Consult if not in Medical Notes. Anaphylaxis → nurse takeover.",
+    reference: "WI-00037 R3",
   },
   b6: {
     title: "Flagged: B6 Recent dental / NSAIDs / skin",
-    body: "Dental work and NSAIDs can affect timing; skin breaks may require assessment.",
-    reference: "Medication & procedure deferral guides",
+    body: "Dental medication (not LA): consult. NSAIDs: what for. Cuts: papercut OK; else consult.",
+    reference: "Medication & procedure deferral guides · WI-00037 PQ",
     deferralNote: "NSAIDs within 48 hours may affect platelet donation.",
+  },
+  b8: {
+    title: "Flagged: B8 Recent health events",
+    body: "Same allow-list as A3 (WA). Consult nurse for non-listed scenarios.",
+    reference: "WI-00037 WA · GSBD",
+  },
+  b11: {
+    title: "Flagged: B11 STI history",
+    body: "Consult if diagnosis unknown. Cannot establish → nurse takeover / DEL.",
+    reference: "WI-00037 LX",
   },
   b12: {
     title: "Flagged: B12 Medications",
-    body: "Confirm all medications including regular, trial and acne/skin treatments.",
-    reference: "Medication deferral guide",
+    body: "Confirm all medications. Consult for notes changes and oral acne meds.",
+    reference: "Medication deferral guide · WI-00037 0B",
+  },
+  b13: {
+    title: "Flagged: B13 PrEP / injectables",
+    body: "Identify medication. Consult if change not reflected in Medical Notes.",
+    reference: "WI-00037 1P",
   },
   b15: {
     title: "Flagged: B15 Pregnancy history",
     body: "Pregnancy within deferral window excludes donation today.",
-    reference: "Pregnancy deferral standard",
+    reference: "Pregnancy deferral standard · WI-00037 QH",
   },
   b17: {
     title: "Flagged: B17 Overseas travel",
-    body: "Apply travel deferral matrix for region and duration since return.",
-    reference: "Travel deferral matrix",
+    body: "Nurse assesses travel deferral matrix for region and duration.",
+    reference: "Travel deferral matrix · WI-00037 LI",
   },
   c7: {
     title: "Flagged: C7 New partner",
     body: "Assess window-period risk. C7a anal sex response may extend deferral requirements.",
-    reference: "Sexual behaviour risk policy",
+    reference: "Sexual behaviour risk policy · WI-00037 8S",
   },
   c8: {
     title: "Flagged: C8 Multiple partners",
     body: "Assess window-period risk. C8a anal sex response may extend deferral requirements.",
-    reference: "Sexual behaviour risk policy",
+    reference: "Sexual behaviour risk policy · WI-00037 WK",
   },
   c11: {
     title: "Flagged: C11 Tattoo / piercing / acupuncture",
     body: "Standard deferral from procedure date applies for non-exempt skin penetration.",
-    reference: "Skin penetration policy §2.1",
+    reference: "Skin penetration policy · WI-00037 RA",
     deferralNote: "Typical 4-month deferral for tattoo/piercing — confirm date.",
   },
 };

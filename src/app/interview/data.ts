@@ -1,6 +1,10 @@
 // Mock data for the Stitch "Clinical Precision" donor interview mockup.
 
+import type { EscalationLevel } from "./escalation";
+
 export type DonorScreeningResponse = "yes" | "no";
+
+export type { EscalationLevel };
 
 export type Outcome = "eligible" | "nurse_review" | "deferred" | null;
 
@@ -17,6 +21,11 @@ export interface FollowUpQuestion {
   id: string;
   question: string;
   quickOptions: QuickOption[];
+  escalation: EscalationLevel;
+  /** Pill selections that require nurse takeover (e.g. B2a = No) */
+  takeoverOnPillIds?: string[];
+  /** Pill selections that require nurse consult before DSNA continues */
+  consultOnPillIds?: string[];
 }
 
 export interface ScreeningQuestionFlow {
@@ -24,21 +33,28 @@ export interface ScreeningQuestionFlow {
   questionNumber: string;
   question: string;
   donorResponse: DonorScreeningResponse;
+  /** Show follow-ups when centre-panel response matches this (defaults to donorResponse) */
+  followUpTrigger?: DonorScreeningResponse;
   flagReason: string;
   followUps: FollowUpQuestion[];
 }
 
 export interface InterviewQuestion {
   id: string;
-  /** Short code for nurse selection, e.g. MED-07 */
+  /** Paper questionnaire code, e.g. B6 */
   code: string;
+  /** Electronic questionnaire code from WI-00037, e.g. PQ */
+  emqCode: string;
   category: string;
   question: string;
   reviewStatus: QuestionReviewStatus;
+  escalation: EscalationLevel;
   /** Response from the waiting-room tablet; null if not yet answered */
   tabletResponse: DonorScreeningResponse | null;
   /** Maps to a detailed screening flow in the main panel */
   flowKey?: string;
+  /** WI-00037 direction text */
+  wiDirection?: string;
 }
 
 export interface Donor {
