@@ -389,6 +389,7 @@ export const lifebloodScreeningFlows: Record<string, ScreeningQuestionFlow> = {
     question:
       "In the last 6 months, sex (excluding oral) with more than one person?",
     donorResponse: "yes",
+    c8MultiplePartnersGuidance: true,
     flagReason:
       "Multiple partners may increase window-period risk. Clarify with donor privately.",
     followUps: [
@@ -527,8 +528,8 @@ export const lifebloodClinicalInsights: Record<
   },
   c8: {
     title: "Flagged: C8 Multiple partners",
-    body: "Assess window-period risk. C8a anal sex response may extend deferral requirements.",
-    reference: "Sexual behaviour risk policy · WI-00037 WK",
+    body: "Answer C8a (anal sex in the last 3 months) to load GSBD guidance for this scenario.",
+    reference: "GSBD — Sexual activity deferrals · WI-00037 WK",
   },
   c14: {
     title: "Flagged: C14 Sexual contact",

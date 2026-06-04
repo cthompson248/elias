@@ -41,6 +41,8 @@ export interface ScreeningQuestionFlow {
   hazardousActivity?: boolean;
   /** C14: GSBD sexual contact lookup from notes below the question */
   sexualContactGuidance?: boolean;
+  /** C8: GSBD guidance after C8a anal-sex follow-up */
+  c8MultiplePartnersGuidance?: boolean;
 }
 
 export interface InterviewQuestion {

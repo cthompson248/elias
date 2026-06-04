@@ -25,6 +25,11 @@ import {
 } from "../HazardousActivityGuidance";
 import { lookupHazardousActivity } from "../hazardous-activities";
 import {
+  buildC8ClinicalInsight,
+  C8MultiplePartnersGuidance,
+  parseC8AnalSexResponse,
+} from "../C8MultiplePartnersGuidance";
+import {
   buildC14ClinicalInsight,
   SexualContactGuidance,
   type SexualContactGuidanceState,
@@ -110,12 +115,23 @@ export default function InterviewReviewPage() {
   }
   const activeFlowKey = activeQuestion?.flowKey;
   const activeFlow = activeFlowKey ? screeningFlows[activeFlowKey] : null;
+  const donorResponse = questionResponses[activeItemId] ?? null;
+  const activeFollowUps = activeFlowKey
+    ? (followUpAnswers[activeFlowKey] ?? {})
+    : {};
+  const c8AnalSexResponse =
+    activeFlowKey === "c8"
+      ? parseC8AnalSexResponse(activeFollowUps.c8a?.pillId)
+      : null;
+
   const clinicalInsight =
     activeFlowKey === "b5"
       ? buildB5ClinicalInsight(
           b5HazardousState.matchedId,
           b5HazardousState.donorDecision
         )
+      : activeFlowKey === "c8"
+        ? buildC8ClinicalInsight(c8AnalSexResponse)
       : activeFlowKey === "c14"
         ? buildC14ClinicalInsight(
             c14GuidanceState.matchedId,
@@ -124,13 +140,10 @@ export default function InterviewReviewPage() {
         : activeFlowKey
           ? clinicalInsightByFlow[activeFlowKey]
           : null;
-  const donorResponse = questionResponses[activeItemId] ?? null;
-  const activeFollowUps = activeFlowKey
-    ? (followUpAnswers[activeFlowKey] ?? {})
-    : {};
   const notes = notesByQuestion[activeItemId] ?? "";
 
   const showDeferralNote =
+    (activeFlowKey === "c8" && c8AnalSexResponse === "yes") ||
     (activeFlowKey === "c14" &&
       c14GuidanceState.partnerIsLifebloodDonor === false) ||
     (activeFlowKey === "b5" && b5HazardousState.donorDecision === "defer") ||
@@ -779,19 +792,21 @@ function ScreeningDetailPanel({
 
       {showFollowUps && !flow.hazardousActivity && !flow.sexualContactGuidance && (
         <>
-          <div className="mt-6 flex gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
-            <InfoIcon className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" />
-            <div>
-              <p className="text-sm font-semibold text-blue-900">
-                Why this is flagged
-              </p>
-              <p className="mt-1 text-sm leading-6 text-blue-800">
-                {flow.flagReason}
-              </p>
+          {!flow.c8MultiplePartnersGuidance && (
+            <div className="mt-6 flex gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
+              <InfoIcon className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" />
+              <div>
+                <p className="text-sm font-semibold text-blue-900">
+                  Why this is flagged
+                </p>
+                <p className="mt-1 text-sm leading-6 text-blue-800">
+                  {flow.flagReason}
+                </p>
+              </div>
             </div>
-          </div>
+          )}
 
-          <section className="mt-8">
+          <section className={flow.c8MultiplePartnersGuidance ? "mt-6" : "mt-8"}>
             <h2 className="text-base font-semibold text-[var(--clinical-on-surface)]">
               Follow-up questions
             </h2>
@@ -816,6 +831,14 @@ function ScreeningDetailPanel({
               ))}
             </div>
           </section>
+
+          {flow.c8MultiplePartnersGuidance && (
+            <C8MultiplePartnersGuidance
+              analSexResponse={parseC8AnalSexResponse(
+                followUpAnswers.c8a?.pillId
+              )}
+            />
+          )}
         </>
       )}
 
