@@ -118,6 +118,18 @@ export const lifebloodScreeningFlows: Record<string, ScreeningQuestionFlow> = {
     ],
   },
 
+  b5: {
+    section: "SECTION B",
+    questionNumber: "B5",
+    question:
+      "In the next 3 days, do you intend to participate in any activity which would place you or others at risk of injury if you were to become unwell after donating, such as driving public transport, operating heavy machinery, underwater diving, piloting a plane?",
+    donorResponse: "yes",
+    hazardousActivity: true,
+    flagReason:
+      "Donor intends a hazardous occupational or recreational activity. Identify the activity in GSBD and read the general advice to the donor.",
+    followUps: [],
+  },
+
   b3: {
     section: "SECTION B",
     questionNumber: "B3",
@@ -448,6 +460,12 @@ export const lifebloodClinicalInsights: Record<
     title: "Flagged: B2 Post-donation effects",
     body: "If side effects not reported to Lifeblood (B2a No), nurse must take over.",
     reference: "Adverse reaction protocol · WI-00037 9M",
+  },
+  b5: {
+    title: "Flagged: B5 Hazardous activity",
+    body: "Add notes for this interview and press Enter to load GSBD guidance when a hazardous activity is recorded.",
+    reference:
+      "GSBD — Hazardous occupational/recreational activities · WI-00037 2B",
   },
   b3: {
     title: "Flagged: B3 Chlorhexidine allergy",

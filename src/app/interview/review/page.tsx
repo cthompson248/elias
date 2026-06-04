@@ -19,10 +19,16 @@ import {
   type ScreeningQuestionFlow,
 } from "../data";
 import {
+  buildB5ClinicalInsight,
+  HazardousActivityGuidance,
+  type HazardousActivityState,
+} from "../HazardousActivityGuidance";
+import { lookupHazardousActivity } from "../hazardous-activities";
+import {
   getAllInterviewQuestions,
   getSessionReviewQueueIds,
 } from "../session";
-import { escalationMeta, resolveInterviewEscalation, type EscalationLevel } from "../escalation";
+import { resolveInterviewEscalation, type EscalationLevel } from "../escalation";
 import {
   canRoleEdit,
   getFollowUpRoleNotice,
@@ -62,6 +68,11 @@ export default function InterviewReviewPage() {
     {}
   );
   const [interviewRole] = useState<InterviewRole>(() => loadInterviewRole());
+  const [b5HazardousState, setB5HazardousState] = useState<HazardousActivityState>({
+    matchedId: null,
+    lookupAttempted: false,
+    donorDecision: null,
+  });
 
   useEffect(() => {
     if (reviewQueueIds.size === 0) {
@@ -82,9 +93,15 @@ export default function InterviewReviewPage() {
   }
   const activeFlowKey = activeQuestion?.flowKey;
   const activeFlow = activeFlowKey ? screeningFlows[activeFlowKey] : null;
-  const clinicalInsight = activeFlowKey
-    ? clinicalInsightByFlow[activeFlowKey]
-    : null;
+  const clinicalInsight =
+    activeFlowKey === "b5"
+      ? buildB5ClinicalInsight(
+          b5HazardousState.matchedId,
+          b5HazardousState.donorDecision
+        )
+      : activeFlowKey
+        ? clinicalInsightByFlow[activeFlowKey]
+        : null;
   const donorResponse = questionResponses[activeItemId] ?? null;
   const activeFollowUps = activeFlowKey
     ? (followUpAnswers[activeFlowKey] ?? {})
@@ -92,7 +109,8 @@ export default function InterviewReviewPage() {
   const notes = notesByQuestion[activeItemId] ?? "";
 
   const showDeferralNote =
-    donorResponse === "yes" &&
+    (activeFlowKey === "b5" && b5HazardousState.donorDecision === "defer") ||
+    (donorResponse === "yes" &&
     (activeFlowKey === "b6"
       ? ["yes-once", "ongoing", "prescribed", "not-in-notes"].includes(
           activeFollowUps.nsaids?.pillId ?? ""
@@ -101,9 +119,9 @@ export default function InterviewReviewPage() {
         ? Boolean(activeFollowUps.procedure?.pillId)
         : activeFlowKey === "a15"
           ? activeFollowUps.a15a?.pillId === "yes"
-          : false);
+          : false));
 
-  const effectiveEscalation: EscalationLevel = activeQuestion
+  let effectiveEscalation: EscalationLevel = activeQuestion
     ? resolveInterviewEscalation(
         activeQuestion.escalation,
         activeFlow?.followUps ?? [],
@@ -111,6 +129,13 @@ export default function InterviewReviewPage() {
         false
       )
     : "dsna";
+
+  if (
+    activeFlowKey === "b5" &&
+    b5HazardousState.donorDecision === "continue"
+  ) {
+    effectiveEscalation = "consult_nurse";
+  }
 
   const roleNotice = getRoleEscalationNotice(interviewRole, effectiveEscalation);
   const canEdit = canRoleEdit(interviewRole, effectiveEscalation);
@@ -208,13 +233,6 @@ export default function InterviewReviewPage() {
           >
             Change selection
           </Link>
-          <button
-            type="button"
-            className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 transition-colors hover:bg-red-100"
-          >
-            <AlertIcon className="h-4 w-4" />
-            Emergency Alert
-          </button>
           <IconButton label="Notifications">
             <BellIcon className="h-5 w-5" />
           </IconButton>
@@ -267,8 +285,6 @@ export default function InterviewReviewPage() {
               emqCode={activeQuestion?.emqCode}
               questionCode={activeQuestion?.code}
               interviewRole={interviewRole}
-              escalation={effectiveEscalation}
-              wiDirection={activeQuestion?.wiDirection}
               donorResponse={donorResponse}
               readOnly={!canEdit}
               onDonorResponseChange={(response) =>
@@ -282,11 +298,32 @@ export default function InterviewReviewPage() {
                 updateFollowUp(activeFlowKey, followUpId, { custom })
               }
               notes={notes}
-              onNotesChange={(value) =>
+              onNotesChange={(value) => {
                 setNotesByQuestion((prev) => ({
                   ...prev,
                   [activeItemId]: value,
-                }))
+                }));
+                if (activeFlowKey === "b5") {
+                  setB5HazardousState({
+                    matchedId: null,
+                    lookupAttempted: false,
+                    donorDecision: null,
+                  });
+                }
+              }}
+              hazardousActivityState={
+                activeFlowKey === "b5" ? b5HazardousState : undefined
+              }
+              onHazardousLookupFromNotes={(noteText) => {
+                const match = lookupHazardousActivity(noteText);
+                setB5HazardousState({
+                  matchedId: match?.id ?? null,
+                  lookupAttempted: true,
+                  donorDecision: null,
+                });
+              }}
+              onHazardousDonorDecision={(decision) =>
+                setB5HazardousState((prev) => ({ ...prev, donorDecision: decision }))
               }
             />
           ) : activeQuestion ? (
@@ -295,9 +332,6 @@ export default function InterviewReviewPage() {
                 {activeQuestion.emqCode} · {activeQuestion.code} ·{" "}
                 {activeQuestion.category}
               </p>
-              <div className="mt-2 flex flex-wrap items-center gap-2">
-                <EscalationBadge level={activeQuestion.escalation} />
-              </div>
               <div className="mt-2 flex items-center justify-between gap-6">
                 <h1 className="min-w-0 flex-1 font-[family-name:var(--font-public-sans)] text-2xl font-semibold leading-tight">
                   {activeQuestion.question}
@@ -317,11 +351,6 @@ export default function InterviewReviewPage() {
                   />
                 </div>
               </div>
-              {activeQuestion.wiDirection && (
-                <p className="mt-6 text-sm leading-6 text-[var(--clinical-on-surface-variant)]">
-                  {activeQuestion.wiDirection}
-                </p>
-              )}
             </div>
           ) : (
             <div className="flex flex-1 items-center justify-center p-8 text-sm text-[var(--clinical-on-surface-variant)]">
@@ -339,18 +368,9 @@ export default function InterviewReviewPage() {
           </div>
 
           <div className="px-4 pb-6">
-            {activeQuestion && (
-              <div className="mb-4 space-y-3 px-1">
-                <EscalationBadge level={effectiveEscalation} />
-                {roleNotice && <RoleEscalationNotice notice={roleNotice} />}
-                {activeQuestion.wiDirection && (
-                  <p className="mt-3 rounded-lg bg-white px-3 py-2.5 text-xs leading-5 text-[var(--clinical-on-surface-variant)] ring-1 ring-[var(--clinical-outline)]">
-                    <span className="font-semibold text-[var(--clinical-on-surface)]">
-                      WI-00037:{" "}
-                    </span>
-                    {activeQuestion.wiDirection}
-                  </p>
-                )}
+            {roleNotice && (
+              <div className="mb-4 px-1">
+                <RoleEscalationNotice notice={roleNotice} />
               </div>
             )}
 
@@ -524,7 +544,6 @@ function ChecklistQuestionCard({
         <p className="font-mono text-xs font-bold tracking-wide text-[var(--clinical-primary)]">
           {question.emqCode} · {question.code}
         </p>
-        <EscalationBadge level={question.escalation} compact />
       </div>
       <p className="mt-1 text-sm font-semibold leading-snug text-[var(--clinical-on-surface)]">
         {question.question}
@@ -595,8 +614,6 @@ function ScreeningDetailPanel({
   emqCode,
   questionCode,
   interviewRole,
-  escalation,
-  wiDirection,
   donorResponse,
   readOnly,
   onDonorResponseChange,
@@ -605,13 +622,14 @@ function ScreeningDetailPanel({
   onCustomChange,
   notes,
   onNotesChange,
+  hazardousActivityState,
+  onHazardousLookupFromNotes,
+  onHazardousDonorDecision,
 }: {
   flow: ScreeningQuestionFlow;
   emqCode?: string;
   questionCode?: string;
   interviewRole: InterviewRole;
-  escalation: EscalationLevel;
-  wiDirection?: string;
   donorResponse: DonorScreeningResponse | null;
   readOnly: boolean;
   onDonorResponseChange: (response: DonorScreeningResponse) => void;
@@ -620,9 +638,20 @@ function ScreeningDetailPanel({
   onCustomChange: (followUpId: string, custom: string) => void;
   notes: string;
   onNotesChange: (value: string) => void;
+  hazardousActivityState?: HazardousActivityState;
+  onHazardousLookupFromNotes?: (noteText: string) => void;
+  onHazardousDonorDecision?: (
+    decision: HazardousActivityState["donorDecision"]
+  ) => void;
 }) {
   const followUpTrigger = flow.followUpTrigger ?? flow.donorResponse;
   const showFollowUps = donorResponse === followUpTrigger;
+  const showHazardousFlow =
+    flow.hazardousActivity &&
+    donorResponse === "yes" &&
+    hazardousActivityState &&
+    onHazardousLookupFromNotes &&
+    onHazardousDonorDecision;
 
   return (
     <div
@@ -632,9 +661,6 @@ function ScreeningDetailPanel({
         {emqCode && `${emqCode} · `}
         {questionCode ?? flow.questionNumber} · {flow.section}
       </p>
-      <div className="mt-2">
-        <EscalationBadge level={escalation} />
-      </div>
       <div className="mt-2 flex items-center justify-between gap-6">
         <h1 className="min-w-0 flex-1 font-[family-name:var(--font-public-sans)] text-2xl font-semibold leading-tight text-[var(--clinical-on-surface)]">
           {flow.question}
@@ -655,16 +681,7 @@ function ScreeningDetailPanel({
         </div>
       </div>
 
-      {wiDirection && (
-        <p className="mt-4 text-sm leading-6 text-[var(--clinical-on-surface-variant)]">
-          <span className="font-semibold text-[var(--clinical-on-surface)]">
-            WI-00037:{" "}
-          </span>
-          {wiDirection}
-        </p>
-      )}
-
-      {showFollowUps && (
+      {showFollowUps && !flow.hazardousActivity && (
         <>
           <div className="mt-6 flex gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
             <InfoIcon className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" />
@@ -706,6 +723,20 @@ function ScreeningDetailPanel({
         </>
       )}
 
+      {showHazardousFlow && (
+        <div className="mt-6 flex gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
+          <InfoIcon className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" />
+          <div>
+            <p className="text-sm font-semibold text-blue-900">
+              Why this is flagged
+            </p>
+            <p className="mt-1 text-sm leading-6 text-blue-800">
+              {flow.flagReason}
+            </p>
+          </div>
+        </div>
+      )}
+
       <section className="mt-8">
         <h2 className="text-base font-semibold text-[var(--clinical-on-surface)]">
           Notes
@@ -713,6 +744,17 @@ function ScreeningDetailPanel({
         <textarea
           value={notes}
           onChange={(e) => onNotesChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (
+              e.key === "Enter" &&
+              !e.shiftKey &&
+              showHazardousFlow &&
+              onHazardousLookupFromNotes
+            ) {
+              e.preventDefault();
+              onHazardousLookupFromNotes(e.currentTarget.value);
+            }
+          }}
           placeholder={
             donorResponse === "no"
               ? "Add any additional context for this negative response…"
@@ -722,6 +764,15 @@ function ScreeningDetailPanel({
           className="mt-3 w-full resize-none rounded-xl border border-[var(--clinical-outline)] bg-[var(--clinical-surface)] px-4 py-3 text-sm leading-6 outline-none placeholder:text-[#727783] focus:border-[var(--clinical-primary)] focus:bg-white focus:ring-2 focus:ring-[var(--clinical-primary)]/20"
         />
       </section>
+
+      {showHazardousFlow && (
+        <HazardousActivityGuidance
+          interviewRole={interviewRole}
+          state={hazardousActivityState}
+          activityNotes={notes}
+          onDonorDecision={onHazardousDonorDecision}
+        />
+      )}
     </div>
   );
 }
@@ -741,25 +792,6 @@ function RoleEscalationNotice({ notice }: { notice: RoleEscalationNotice }) {
       <p className="font-semibold">{notice.title}</p>
       <p className="mt-1">{notice.body}</p>
     </div>
-  );
-}
-
-function EscalationBadge({
-  level,
-  compact = false,
-}: {
-  level: EscalationLevel;
-  compact?: boolean;
-}) {
-  const meta = escalationMeta[level];
-  return (
-    <span
-      className={`inline-flex items-center rounded-full border font-semibold ${meta.className} ${
-        compact ? "px-2 py-0.5 text-[10px]" : "px-2.5 py-0.5 text-[11px]"
-      }`}
-    >
-      {meta.shortLabel}
-    </span>
   );
 }
 
@@ -843,7 +875,6 @@ function FollowUpQuestionCard({
               {followUp.question}
             </p>
             <div className="flex shrink-0 items-center gap-2">
-              <EscalationBadge level={followUp.escalation} compact />
               {isComplete && (
                 <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-white">
                   <CheckIcon className="h-3.5 w-3.5" />

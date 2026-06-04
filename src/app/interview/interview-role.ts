@@ -1,6 +1,6 @@
 import {
   blocksDsna,
-  requiresNurseConsult,
+  needsNurseHighlight,
   type EscalationLevel,
 } from "./escalation";
 
@@ -30,60 +30,47 @@ export function getRoleEscalationNotice(
   role: InterviewRole,
   level: EscalationLevel
 ): RoleEscalationNotice | null {
+  if (!needsNurseHighlight(level)) return null;
+
   if (role === "nurse") {
     if (level === "nurse_takeover") {
       return {
-        title: "Nurse ownership",
-        body: "Complete this question per WI-00037 and GSBD before the donor proceeds.",
+        title: "Nurse required",
+        body: "Complete this question per GSBD before the donor proceeds.",
         tone: "rose",
       };
     }
-    if (requiresNurseConsult(level)) {
-      return {
-        title: "Nurse assessment",
-        body: "Assess this item per GSBD and record the outcome in the interview notes.",
-        tone: "amber",
-      };
-    }
-    return null;
-  }
-
-  if (blocksDsna(level)) {
     return {
-      title: "Nurse required",
-      body: "A nurse must complete this question. Ask a nurse to take over this item before proceeding.",
-      tone: "rose",
-    };
-  }
-  if (requiresNurseConsult(level)) {
-    return {
-      title: "Nurse consult required",
-      body: "Ask a nurse to review this question before you mark it complete. You may continue recording donor responses and notes while waiting.",
+      title: "Nurse assessment",
+      body: "Assess this item per GSBD and record the outcome in the interview notes.",
       tone: "amber",
     };
   }
-  if (level === "dsna_if_allowed") {
+
+  if (level === "nurse_takeover") {
     return {
-      title: "Allowed scenarios only",
-      body: "Continue only if the donor's answer matches an allow-listed scenario in WI-00037. Otherwise, ask a nurse to review.",
-      tone: "blue",
+      title: "Nurse required",
+      body: "A nurse must complete this question. Ask a nurse to take over before proceeding.",
+      tone: "rose",
     };
   }
-  return null;
+
+  return {
+    title: "Nurse consult required",
+    body: "Ask a nurse to review this question before you mark it complete.",
+    tone: "amber",
+  };
 }
 
 export function getFollowUpRoleNotice(
   role: InterviewRole,
   escalation: EscalationLevel
 ): string | null {
-  if (role !== "dsna") return null;
+  if (role !== "dsna" || !needsNurseHighlight(escalation)) return null;
   if (escalation === "nurse_takeover") {
-    return "This follow-up requires a nurse. Ask a nurse to complete it.";
+    return "A nurse must complete this follow-up.";
   }
-  if (escalation === "consult_nurse") {
-    return "Nurse consult required for this follow-up.";
-  }
-  return null;
+  return "Ask a nurse to review this follow-up.";
 }
 
 export function canRoleEdit(

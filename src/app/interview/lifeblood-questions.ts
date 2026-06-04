@@ -136,7 +136,9 @@ export const lifebloodQuestionBank: QuestionBankEntry[] = [
     "B5",
     B,
     "In the next 3 days, do you intend to participate in any activity which would place you or others at risk of injury if you were to become unwell after donating, such as driving public transport, operating heavy machinery, underwater diving, piloting a plane?",
-    "no"
+    "yes",
+    "clarify",
+    "b5"
   ),
   entry(
     "B6",

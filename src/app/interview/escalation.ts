@@ -48,6 +48,11 @@ export function blocksDsna(level: EscalationLevel): boolean {
   return level === "nurse_takeover";
 }
 
+/** Show UI prompts only when a nurse must be involved (not DSNA permission labels). */
+export function needsNurseHighlight(level: EscalationLevel): boolean {
+  return level === "consult_nurse" || level === "nurse_takeover";
+}
+
 const escalationRank: Record<EscalationLevel, number> = {
   dsna: 0,
   dsna_if_allowed: 1,

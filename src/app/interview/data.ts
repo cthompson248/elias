@@ -37,6 +37,8 @@ export interface ScreeningQuestionFlow {
   followUpTrigger?: DonorScreeningResponse;
   flagReason: string;
   followUps: FollowUpQuestion[];
+  /** B5: GSBD hazardous activity lookup instead of pill follow-ups */
+  hazardousActivity?: boolean;
 }
 
 export interface InterviewQuestion {
@@ -123,22 +125,39 @@ export const screeningFlows = lifebloodScreeningFlows;
 
 export const clinicalInsightByFlow = lifebloodClinicalInsights;
 
+/** Quick links to GSBD sections (not the paper/eMQ questionnaire). */
 export const referenceGuidance = [
   {
-    id: "questionnaire-a",
-    label: "Donor questionnaire — Section A (new & returned donors)",
+    id: "gsbd-hazardous-activities",
+    label: "GSBD — Hazardous occupational/recreational activities",
   },
   {
-    id: "questionnaire-b",
-    label: "Donor questionnaire — Section B (medical)",
+    id: "gsbd-travel",
+    label: "GSBD — Travel deferrals",
   },
   {
-    id: "questionnaire-c",
-    label: "Donor questionnaire — Section C (declaration)",
+    id: "gsbd-medications",
+    label: "GSBD — Medication deferrals",
   },
   {
-    id: "travel-matrix",
-    label: "Travel deferral matrix",
+    id: "gsbd-allow-listed-medical",
+    label: "GSBD — Allow-listed medical scenarios",
+  },
+  {
+    id: "gsbd-pregnancy",
+    label: "GSBD — Pregnancy deferrals",
+  },
+  {
+    id: "gsbd-skin-penetration",
+    label: "GSBD — Skin penetration (tattoo, piercing, acupuncture)",
+  },
+  {
+    id: "gsbd-sexual-activity",
+    label: "GSBD — Sexual activity deferrals",
+  },
+  {
+    id: "gsbd-adverse-reactions",
+    label: "GSBD — Adverse donation reactions",
   },
 ];
 
