@@ -422,7 +422,7 @@ export default function InterviewReviewPage() {
         <aside className="col-span-1 flex min-h-0 min-w-0 flex-col overflow-y-auto border-l border-[var(--clinical-outline)] bg-[var(--clinical-surface-insights)]">
           <div className="px-5 py-4">
             <h2 className="font-[family-name:var(--font-public-sans)] text-sm font-semibold">
-              Guidence
+              Guidance
             </h2>
           </div>
 
