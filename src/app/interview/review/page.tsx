@@ -951,7 +951,7 @@ function DonorResponseButton({
     <button
       type="button"
       onClick={onClick}
-      className={`flex items-center justify-center gap-1.5 rounded-lg border font-semibold transition-colors ${
+      className={`flex items-center justify-center rounded-lg border font-semibold transition-colors ${
         compact ? "px-2.5 py-2 text-xs" : "px-3 py-2 text-sm"
       } ${
         selected
@@ -962,15 +962,6 @@ function DonorResponseButton({
       }`}
       aria-pressed={selected}
     >
-      {variant === "yes" ? (
-        <ThumbsUpIcon
-          className={`h-4 w-4 ${selected ? "text-emerald-600" : "text-[#c2c6d4]"}`}
-        />
-      ) : (
-        <ThumbsDownIcon
-          className={`h-4 w-4 ${selected ? "text-[#727783]" : "text-[#c2c6d4]"}`}
-        />
-      )}
       {label}
     </button>
   );
@@ -1073,22 +1064,6 @@ function GearIcon({ className }: { className?: string }) {
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <circle cx="12" cy="12" r="3" />
       <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function ThumbsUpIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M7 10v12M7 10l-4-4V4a2 2 0 012-2h3.5a2 2 0 011.7.9l1.3 2.6a4 4 0 002.2 2.2L17 10v8a2 2 0 01-2 2h-6.5a2 2 0 01-1.7-.9L7 14" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function ThumbsDownIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M17 14V2M17 14l4-4V4a2 2 0 00-2-2h-3.5a2 2 0 00-1.7.9l-1.3 2.6a4 4 0 00-2.2 2.2L7 14v8a2 2 0 002 2h6.5a2 2 0 001.7-.9L17 14" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
