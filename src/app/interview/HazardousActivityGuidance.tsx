@@ -1,5 +1,6 @@
 "use client";
 
+import type { KeyboardEvent } from "react";
 import type { InterviewRole } from "./interview-role";
 import {
   buildHazardousReadAloudText,
@@ -18,12 +19,18 @@ export interface HazardousActivityState {
 
 export function B5ActivitySelection({
   selectedId,
+  customInput,
   readOnly,
   onSelectActivity,
+  onCustomInputChange,
+  onCustomKeyDown,
 }: {
   selectedId: string | null;
+  customInput: string;
   readOnly?: boolean;
   onSelectActivity: (activityId: string) => void;
+  onCustomInputChange: (value: string) => void;
+  onCustomKeyDown?: (event: KeyboardEvent<HTMLInputElement>) => void;
 }) {
   return (
     <QuestionPanelCard
@@ -41,6 +48,16 @@ export function B5ActivitySelection({
           />
         ))}
       </div>
+
+      <input
+        type="text"
+        value={customInput}
+        disabled={readOnly}
+        onChange={(e) => onCustomInputChange(e.target.value)}
+        onKeyDown={onCustomKeyDown}
+        placeholder="Or type a custom response..."
+        className="mt-3 w-full rounded-lg border border-[var(--clinical-outline)] bg-[var(--clinical-surface)] px-3 py-2.5 text-sm outline-none placeholder:text-[var(--clinical-on-surface-variant)] focus:border-[var(--clinical-primary)] focus:bg-white"
+      />
     </QuestionPanelCard>
   );
 }
@@ -158,7 +175,7 @@ export function buildB5ClinicalInsight(
   if (!matched) {
     return {
       title: "Flagged: B5 Hazardous activity",
-      body: "Donor answered Yes. Select a hazardous activity below or add interview notes and press Enter to load GSBD guidance.",
+      body: "Donor answered Yes. Select a hazardous activity below or type a custom response and press Enter to load GSBD guidance.",
       reference:
         "GSBD — Hazardous occupational/recreational activities · WI-00037 2B",
     };

@@ -30,7 +30,6 @@ import {
   type HazardousActivityState,
 } from "../HazardousActivityGuidance";
 import {
-  getHazardousActivityById,
   lookupHazardousActivity,
 } from "../hazardous-activities";
 import {
@@ -89,6 +88,7 @@ export default function InterviewReviewPage() {
     {}
   );
   const [interviewRole] = useState<InterviewRole>(() => loadInterviewRole());
+  const [b5CustomInput, setB5CustomInput] = useState("");
   const [b5HazardousState, setB5HazardousState] = useState<HazardousActivityState>({
     matchedId: null,
     lookupAttempted: false,
@@ -123,6 +123,7 @@ export default function InterviewReviewPage() {
       questionResponses,
       followUpAnswers,
       notesByQuestion,
+      b5CustomInput,
       b5HazardousState,
       c14Scenario,
       c14PartnerDonor,
@@ -132,6 +133,7 @@ export default function InterviewReviewPage() {
       questionResponses,
       followUpAnswers,
       notesByQuestion,
+      b5CustomInput,
       b5HazardousState,
       c14Scenario,
       c14PartnerDonor,
@@ -371,20 +373,22 @@ export default function InterviewReviewPage() {
                   ...prev,
                   [activeItemId]: value,
                 }));
-                if (activeFlowKey === "b5") {
-                  setB5HazardousState({
-                    matchedId: null,
-                    lookupAttempted: false,
-                    adviceReadToDonor: false,
-                    donorDecision: null,
-                  });
-                }
               }}
               hazardousActivityState={
                 activeFlowKey === "b5" ? b5HazardousState : undefined
               }
-              onHazardousLookupFromNotes={(noteText) => {
-                const match = lookupHazardousActivity(noteText);
+              b5CustomInput={activeFlowKey === "b5" ? b5CustomInput : ""}
+              onB5CustomInputChange={(value) => {
+                setB5CustomInput(value);
+                setB5HazardousState({
+                  matchedId: null,
+                  lookupAttempted: false,
+                  adviceReadToDonor: false,
+                  donorDecision: null,
+                });
+              }}
+              onB5CustomLookup={() => {
+                const match = lookupHazardousActivity(b5CustomInput);
                 setB5HazardousState({
                   matchedId: match?.id ?? null,
                   lookupAttempted: true,
@@ -393,13 +397,8 @@ export default function InterviewReviewPage() {
                 });
               }}
               onSelectB5Activity={(activityId) => {
-                const entry = getHazardousActivityById(activityId);
-                if (!entry) return;
                 const deselect = b5HazardousState.matchedId === activityId;
-                setNotesByQuestion((prev) => ({
-                  ...prev,
-                  [activeItemId]: deselect ? "" : entry.label,
-                }));
+                setB5CustomInput("");
                 setB5HazardousState({
                   matchedId: deselect ? null : activityId,
                   lookupAttempted: !deselect,
@@ -691,7 +690,9 @@ function ScreeningDetailPanel({
   notes,
   onNotesChange,
   hazardousActivityState,
-  onHazardousLookupFromNotes,
+  b5CustomInput,
+  onB5CustomInputChange,
+  onB5CustomLookup,
   onSelectB5Activity,
   onAdviceReadToDonorChange,
   onHazardousDonorDecision,
@@ -717,7 +718,9 @@ function ScreeningDetailPanel({
   notes: string;
   onNotesChange: (value: string) => void;
   hazardousActivityState?: HazardousActivityState;
-  onHazardousLookupFromNotes?: (noteText: string) => void;
+  b5CustomInput?: string;
+  onB5CustomInputChange?: (value: string) => void;
+  onB5CustomLookup?: () => void;
   onSelectB5Activity?: (activityId: string) => void;
   onAdviceReadToDonorChange?: (read: boolean) => void;
   onHazardousDonorDecision?: (
@@ -740,7 +743,8 @@ function ScreeningDetailPanel({
     flow.hazardousActivity &&
     donorResponse === "yes" &&
     hazardousActivityState &&
-    onHazardousLookupFromNotes &&
+    onB5CustomInputChange &&
+    onB5CustomLookup &&
     onSelectB5Activity &&
     onAdviceReadToDonorChange &&
     onHazardousDonorDecision;
@@ -770,15 +774,6 @@ function ScreeningDetailPanel({
         value={notes}
         onChange={onNotesChange}
         readOnly={readOnly}
-        onKeyDown={
-          showHazardousFlow && onHazardousLookupFromNotes
-            ? (e) => {
-                if (e.key !== "Enter" || e.shiftKey) return;
-                e.preventDefault();
-                onHazardousLookupFromNotes(e.currentTarget.value);
-              }
-            : undefined
-        }
       />
 
       {showSexualContactFlow && (
@@ -829,14 +824,21 @@ function ScreeningDetailPanel({
           <div className="mt-6">
             <B5ActivitySelection
               selectedId={hazardousActivityState.matchedId}
+              customInput={b5CustomInput ?? ""}
               readOnly={readOnly}
               onSelectActivity={onSelectB5Activity}
+              onCustomInputChange={onB5CustomInputChange}
+              onCustomKeyDown={(e) => {
+                if (e.key !== "Enter" || e.shiftKey) return;
+                e.preventDefault();
+                onB5CustomLookup?.();
+              }}
             />
           </div>
           <HazardousActivityGuidance
             interviewRole={interviewRole}
             state={hazardousActivityState}
-            activityNotes={notes}
+            activityNotes={b5CustomInput ?? ""}
             onAdviceReadToDonorChange={onAdviceReadToDonorChange}
             onDonorDecision={onHazardousDonorDecision}
           />

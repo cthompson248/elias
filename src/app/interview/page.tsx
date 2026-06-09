@@ -224,8 +224,6 @@ function SelectionRow({
   selected: boolean;
   onToggle: () => void;
 }) {
-  const isYes = question.tabletResponse === "yes";
-
   return (
     <li className="border-b border-[var(--clinical-outline)] last:border-b-0">
       <label
@@ -247,17 +245,6 @@ function SelectionRow({
           title={question.question}
         >
           {question.question}
-        </span>
-        <span
-          className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold ${
-            isYes
-              ? "bg-[#f3faef] text-[var(--clinical-success)]"
-              : question.tabletResponse === "no"
-                ? "bg-[var(--clinical-surface-insights)] text-[var(--clinical-on-surface-variant)]"
-                : "bg-[var(--clinical-warning-subtle)] text-[var(--clinical-warning)]"
-          }`}
-        >
-          {isYes ? "Y" : question.tabletResponse === "no" ? "N" : "—"}
         </span>
       </label>
     </li>

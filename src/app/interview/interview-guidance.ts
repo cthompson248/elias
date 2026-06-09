@@ -72,6 +72,7 @@ export interface InterviewGuidanceInput {
   questionResponses: Record<string, DonorScreeningResponse | null>;
   followUpAnswers: Record<string, Record<string, FollowUpAnswer>>;
   notesByQuestion: Record<string, string>;
+  b5CustomInput: string;
   b5HazardousState: HazardousActivityState;
   c14Scenario: C14ScenarioSelectionState;
   c14PartnerDonor: boolean | null;
@@ -143,7 +144,7 @@ export function isQuestionFollowUpComplete(
 
 function buildB5Contribution(
   question: InterviewQuestion,
-  notes: string,
+  customInput: string,
   state: HazardousActivityState
 ): QuestionGuidanceContribution {
   const insight = clinicalInsightByFlow.b5;
@@ -160,7 +161,7 @@ function buildB5Contribution(
       status: "incomplete",
       donorMessage: null,
       reasoning:
-        "Select the activity the donor is planning, or type it in the notes box and press Enter.",
+        "Select the activity the donor is planning, or type a custom response and press Enter.",
       severity: "pending",
     };
   }
@@ -172,13 +173,13 @@ function buildB5Contribution(
   if (!matched) {
     return {
       ...base,
-      status: notes.trim() ? "needs_review" : "incomplete",
-      donorMessage: notes.trim()
+      status: customInput.trim() ? "needs_review" : "incomplete",
+      donorMessage: customInput.trim()
         ? "I need to check with a colleague about your planned activity before we can confirm whether you can donate today."
         : null,
       reasoning:
-        "Activity not recognised — try picking from the list above, or rephrase the note and press Enter.",
-      severity: notes.trim() ? "review" : "pending",
+        "Activity not recognised — try picking from the list above, or rephrase your response and press Enter.",
+      severity: customInput.trim() ? "review" : "pending",
     };
   }
 
@@ -513,7 +514,7 @@ function buildQuestionContribution(
   if (flow.hazardousActivity) {
     return buildB5Contribution(
       question,
-      input.notesByQuestion[question.id] ?? "",
+      input.b5CustomInput,
       input.b5HazardousState
     );
   }
