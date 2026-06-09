@@ -19,7 +19,7 @@ export function GuidancePanel({
     pendingQuestionCodes,
   } = guidance;
   const resolvedContributions = contributions.filter(
-    (item) => item.status !== "incomplete" || item.reasoning
+    (item) => item.status !== "incomplete"
   );
   const guidanceReady = sayToDonor !== null;
 
@@ -54,31 +54,26 @@ export function GuidancePanel({
 
       {resolvedContributions.length > 0 && (
         <section className="mt-6">
-          <h3 className="mb-3 text-sm font-medium text-[#727783]">Why</h3>
-          <ul className="flex flex-col gap-3">
+          <h3 className="mb-2 text-sm font-medium text-[#727783]">Why</h3>
+          <ul className="flex flex-col gap-2">
             {resolvedContributions.map((item) => (
               <li key={item.questionId}>
-                <article className="rounded-xl border border-[#e5e7eb] bg-white p-4">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--clinical-secondary)]">
-                    {item.questionCode}
-                    {item.status === "incomplete" && (
-                      <span className="ml-2 normal-case text-amber-700">
-                        · In progress
-                      </span>
-                    )}
-                  </p>
-                  <p className="mt-2 text-sm leading-6 text-[var(--clinical-on-surface-variant)]">
+                <article className="rounded-lg border border-[#e5e7eb] bg-white px-3 py-2.5">
+                  <p className="text-sm leading-snug text-[var(--clinical-on-surface-variant)]">
+                    <span className="font-semibold text-[var(--clinical-on-surface)]">
+                      {item.questionCode}
+                    </span>
+                    <span aria-hidden="true"> · </span>
                     {item.reasoning}
                   </p>
                   {item.deferralNote && item.status === "complete" && (
-                    <p className="mt-3 rounded-lg bg-teal-50 px-3 py-2 text-xs font-medium text-teal-800">
+                    <p className="mt-1.5 text-xs font-medium leading-snug text-teal-800">
                       {item.deferralNote}
                     </p>
                   )}
-                  <div className="mt-3 flex items-start gap-2 rounded-lg bg-[var(--clinical-surface)] px-3 py-2 text-xs text-[var(--clinical-on-surface-variant)]">
-                    <BookIcon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#727783]" />
-                    <span>{item.reference}</span>
-                  </div>
+                  <p className="mt-1.5 text-xs leading-snug text-[#727783]">
+                    {item.reference}
+                  </p>
                 </article>
               </li>
             ))}
