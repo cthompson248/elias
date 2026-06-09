@@ -37,7 +37,7 @@ export function HazardousActivityGuidance({
   return (
     <div className="mt-6 space-y-4">
       {noMatch && (
-        <p className="text-sm text-amber-800">
+        <p className="text-sm text-[var(--clinical-warning)]">
           No matching GSBD entry for &ldquo;{activityNotes.trim()}&rdquo;. Check
           the hazardous activities section in GSBD or refine your note.
         </p>
@@ -45,19 +45,19 @@ export function HazardousActivityGuidance({
 
       {matched && (
         <>
-          <section className="rounded-xl border border-[#e5e7eb] bg-white p-4">
+          <section className="rounded-xl border border-[var(--clinical-outline)] bg-white p-4">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--clinical-secondary)]">
               Step 1 · Read to donor
             </p>
             <p className="mt-3 text-sm font-medium leading-6 text-[var(--clinical-on-surface)]">
               &ldquo;{buildHazardousReadAloudText(matched)}&rdquo;
             </p>
-            <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-lg border border-[#e5e7eb] bg-[var(--clinical-surface)] px-3 py-3">
+            <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-lg border border-[var(--clinical-outline)] bg-[var(--clinical-surface)] px-3 py-3">
               <input
                 type="checkbox"
                 checked={state.adviceReadToDonor}
                 onChange={(e) => onAdviceReadToDonorChange(e.target.checked)}
-                className="mt-0.5 h-4 w-4 shrink-0 rounded border-[#c2c6d4] text-[var(--clinical-primary)]"
+                className="mt-0.5 h-4 w-4 shrink-0 rounded border-[var(--clinical-outline-variant)] text-[var(--clinical-primary)]"
               />
               <span className="text-sm leading-snug text-[var(--clinical-on-surface)]">
                 I have read this advice to the donor
@@ -66,13 +66,14 @@ export function HazardousActivityGuidance({
           </section>
 
           {state.adviceReadToDonor && (
-            <section className="rounded-xl border border-[#e5e7eb] bg-white p-4">
+            <section className="rounded-xl border border-[var(--clinical-outline)] bg-white p-4">
               <p className="text-sm font-medium leading-6 text-[var(--clinical-on-surface)]">
                 Would you like to continue with your donation today?
               </p>
               <div className="mt-3 flex flex-col gap-2 sm:flex-row">
                 <DecisionButton
                   label="Yes, continue with donation"
+                  variant="yes"
                   selected={state.donorDecision === "continue"}
                   onClick={() => onDonorDecision("continue")}
                 />
@@ -94,10 +95,12 @@ function DecisionButton({
   label,
   selected,
   onClick,
+  variant = "neutral",
 }: {
   label: string;
   selected: boolean;
   onClick: () => void;
+  variant?: "yes" | "neutral";
 }) {
   return (
     <button
@@ -106,8 +109,10 @@ function DecisionButton({
       onClick={onClick}
       className={`flex-1 rounded-xl border px-4 py-3 text-left text-sm font-medium transition-colors ${
         selected
-          ? "border-[var(--clinical-primary)] bg-[var(--clinical-primary)]/5 text-[var(--clinical-on-surface)] ring-1 ring-[var(--clinical-primary)]/30"
-          : "border-[var(--clinical-outline)] bg-white text-[var(--clinical-on-surface)] hover:border-[#c2c6d4]"
+          ? variant === "yes"
+            ? "clinical-toggle-yes-selected"
+            : "border-[var(--clinical-outline-variant)] bg-[var(--clinical-surface-insights)] text-[var(--clinical-on-surface)]"
+          : "border-[var(--clinical-outline)] bg-white text-[var(--clinical-on-surface)] hover:border-[var(--clinical-outline-variant)]"
       }`}
     >
       {label}

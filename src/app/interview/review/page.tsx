@@ -238,7 +238,7 @@ export default function InterviewReviewPage() {
       {/* Top header */}
       <header className="grid shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-4 border-b border-[var(--clinical-outline)] bg-white px-6 py-3">
         <div className="flex min-w-0 items-center gap-3">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#dbe4ed] text-sm font-semibold text-[var(--clinical-on-surface-variant)]">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--clinical-surface-insights)] text-sm font-semibold text-[var(--clinical-on-surface-variant)]">
             MT
           </div>
           <div className="min-w-0 leading-tight">
@@ -257,7 +257,7 @@ export default function InterviewReviewPage() {
           </p>
 
           <div className="hidden text-sm text-[var(--clinical-on-surface-variant)] md:block">
-            <span className="text-xs font-semibold uppercase tracking-wider text-[#727783]">
+            <span className="text-xs font-semibold uppercase tracking-wider text-[var(--clinical-on-surface-variant)]">
               Last Donation
             </span>
             <p className="font-medium text-[var(--clinical-on-surface)]">
@@ -444,7 +444,7 @@ export default function InterviewReviewPage() {
             />
           ) : activeQuestion ? (
             <div className="flex flex-1 flex-col overflow-y-auto bg-white px-8 py-8">
-              <p className="text-xs font-semibold uppercase tracking-wider text-[#727783]">
+              <p className="text-xs font-semibold uppercase tracking-wider text-[var(--clinical-on-surface-variant)]">
                 {activeQuestion.code} · {activeQuestion.category}
               </p>
               <h1 className="mt-2 font-[family-name:var(--font-public-sans)] text-2xl font-semibold leading-tight">
@@ -505,7 +505,7 @@ function ChecklistFilterBar({
 
   return (
     <div
-      className="flex rounded-xl bg-[#edeeef] p-1"
+      className="flex rounded-xl bg-[var(--clinical-surface-insights)] p-1"
       role="tablist"
       aria-label="Filter checklist questions"
     >
@@ -530,7 +530,7 @@ function ChecklistFilterBar({
                 className={`rounded-full px-1.5 py-0.5 text-xs font-semibold tabular-nums ${
                   active
                     ? "bg-[var(--clinical-surface)] text-[var(--clinical-on-surface-variant)]"
-                    : "bg-white/80 text-[#727783]"
+                    : "bg-white/80 text-[var(--clinical-on-surface-variant)]"
                 }`}
               >
                 {tab.count}
@@ -569,23 +569,23 @@ function ChecklistQuestionCard({
       }}
       className={`cursor-pointer rounded-xl border bg-white p-4 transition-shadow ${
         isActive
-          ? "border-rose-400 ring-1 ring-rose-200"
-          : "border-[var(--clinical-outline)] hover:border-[#c2c6d4]"
+          ? "border-[var(--clinical-primary)] ring-1 ring-[var(--clinical-primary-subtle-border)]"
+          : "border-[var(--clinical-outline)] hover:border-[var(--clinical-outline-variant)]"
       }`}
     >
       <div className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
           <ReviewStatusBadge status={question.reviewStatus} />
-          <span className="truncate text-xs text-[#727783]">
+          <span className="truncate text-xs text-[var(--clinical-on-surface-variant)]">
             {question.category}
           </span>
         </div>
         {question.reviewStatus === "ok" && response !== null ? (
-          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white">
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--clinical-success)] text-white">
             <CheckIcon className="h-3.5 w-3.5" />
           </span>
         ) : (
-          <ChevronRightIcon className="h-4 w-4 shrink-0 text-[#c2c6d4]" />
+          <ChevronRightIcon className="h-4 w-4 shrink-0 text-[var(--clinical-outline-variant)]" />
         )}
       </div>
 
@@ -629,19 +629,23 @@ function ReviewStatusBadge({ status }: { status: QuestionReviewStatus }) {
   > = {
     ok: {
       label: "OK",
-      className: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      className:
+        "bg-[#f3faef] text-[var(--clinical-success)] border-[#c9e1bd]",
     },
     clarify: {
       label: "Clarify",
-      className: "bg-blue-50 text-blue-700 border-blue-200",
+      className:
+        "bg-[var(--clinical-primary-container)] text-[var(--clinical-primary)] border-[var(--clinical-primary-subtle-border)]",
     },
     attention: {
       label: "Attention",
-      className: "bg-amber-50 text-amber-800 border-amber-200",
+      className:
+        "bg-[var(--clinical-warning-subtle)] text-[var(--clinical-warning)] border-[var(--clinical-warning-subtle-border)]",
     },
     pending: {
       label: "Pending",
-      className: "bg-slate-50 text-slate-600 border-slate-200",
+      className:
+        "bg-[var(--clinical-surface-insights)] text-[var(--clinical-on-surface-variant)] border-[var(--clinical-outline)]",
     },
   };
   const meta = styles[status];
@@ -732,7 +736,7 @@ function ScreeningDetailPanel({
     <div
       className={`min-h-0 flex-1 overflow-y-auto bg-white px-8 py-8 ${readOnly ? "pointer-events-none opacity-60" : ""}`}
     >
-      <p className="text-xs font-semibold uppercase tracking-wider text-[#727783]">
+      <p className="text-xs font-semibold uppercase tracking-wider text-[var(--clinical-on-surface-variant)]">
         {questionCode ?? flow.questionNumber} · {flow.section}
       </p>
       <h1 className="mt-2 font-[family-name:var(--font-public-sans)] text-2xl font-semibold leading-tight text-[var(--clinical-on-surface)]">
@@ -841,9 +845,9 @@ function DonorResponseButton({
       } ${
         selected
           ? variant === "yes"
-            ? "border-emerald-500 bg-emerald-50 text-emerald-800"
-            : "border-slate-400 bg-slate-100 text-slate-700"
-          : "border-[var(--clinical-outline)] bg-white text-[var(--clinical-on-surface-variant)] hover:border-[#c2c6d4] hover:bg-[var(--clinical-surface)]"
+            ? "clinical-toggle-yes-selected"
+            : "border-[var(--clinical-outline-variant)] bg-[var(--clinical-surface-insights)] text-[var(--clinical-on-surface-variant)]"
+          : "border-[var(--clinical-outline)] bg-white text-[var(--clinical-on-surface-variant)] hover:border-[var(--clinical-outline-variant)] hover:bg-[var(--clinical-surface)]"
       }`}
       aria-pressed={selected}
     >
@@ -872,7 +876,9 @@ function FollowUpQuestionCard({
   return (
     <QuestionPanelCard title={followUp.question}>
       {followUpNotice && (
-        <p className="mb-4 text-xs font-medium text-amber-800">{followUpNotice}</p>
+        <p className="mb-4 text-xs font-medium text-[var(--clinical-warning)]">
+          {followUpNotice}
+        </p>
       )}
 
       <div className="flex flex-wrap gap-2">
@@ -896,7 +902,7 @@ function FollowUpQuestionCard({
         onChange={(e) => onCustomChange(e.target.value)}
         placeholder="Or type a custom response..."
         rows={2}
-        className="mt-3 w-full resize-none rounded-lg border border-[#e5e7eb] bg-[var(--clinical-surface)] px-3 py-2.5 text-sm outline-none placeholder:text-[#727783] focus:border-[var(--clinical-primary)] focus:bg-white"
+        className="mt-3 w-full resize-none rounded-lg border border-[var(--clinical-outline)] bg-[var(--clinical-surface)] px-3 py-2.5 text-sm outline-none placeholder:text-[var(--clinical-on-surface-variant)] focus:border-[var(--clinical-primary)] focus:bg-white"
       />
     </QuestionPanelCard>
   );

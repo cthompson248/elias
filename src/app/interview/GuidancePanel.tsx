@@ -11,15 +11,15 @@ export function NextStepBanner({
   pendingQuestionCodes: string[];
 }) {
   return (
-    <section className="shrink-0 border-b border-blue-200/80 bg-[#eef4fb] px-5 py-4">
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-blue-900/75">
+    <section className="shrink-0 border-b border-[var(--clinical-primary-subtle-border)] bg-[var(--clinical-primary-container)] px-5 py-4">
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--clinical-primary-dark)]">
         Next step
       </p>
-      <p className="mt-2 text-sm font-medium leading-6 text-blue-950">
+      <p className="mt-2 text-sm font-medium leading-6 text-[var(--clinical-on-surface)]">
         {nursePrompt}
       </p>
       {pendingQuestionCodes.length > 0 && (
-        <p className="mt-2 text-xs text-blue-900/65">
+        <p className="mt-2 text-xs text-[var(--clinical-on-surface-variant)]">
           Pending: {pendingQuestionCodes.join(", ")}
         </p>
       )}
@@ -34,19 +34,19 @@ export function EscalationBanner({
 }) {
   const palette = {
     amber: {
-      wrap: "border-b border-amber-200/80 bg-[#f7f0e4]",
-      label: "text-amber-900/80",
-      body: "text-amber-950",
+      wrap: "border-b border-[var(--clinical-warning-subtle-border)] bg-[var(--clinical-warning-subtle)]",
+      label: "text-[var(--clinical-warning)]",
+      body: "text-[var(--clinical-on-surface)]",
     },
     rose: {
-      wrap: "border-b border-rose-200/80 bg-[#fceef0]",
-      label: "text-rose-900/75",
-      body: "text-rose-950",
+      wrap: "border-b border-[var(--clinical-primary-subtle-border)] bg-[var(--clinical-primary-container)]",
+      label: "text-[var(--clinical-primary)]",
+      body: "text-[var(--clinical-on-surface)]",
     },
     blue: {
-      wrap: "border-b border-amber-200/80 bg-[#f7f0e4]",
-      label: "text-amber-900/80",
-      body: "text-amber-950",
+      wrap: "border-b border-[var(--clinical-warning-subtle-border)] bg-[var(--clinical-warning-subtle)]",
+      label: "text-[var(--clinical-warning)]",
+      body: "text-[var(--clinical-on-surface)]",
     },
   }[notice.tone];
 
@@ -102,11 +102,11 @@ export function GuidancePanel({
 
       {resolvedContributions.length > 0 && (
         <section className="mt-6">
-          <h3 className="mb-2 text-sm font-medium text-[#727783]">Reasoning</h3>
+          <h3 className="mb-2 text-sm font-medium text-[var(--clinical-on-surface-variant)]">Reasoning</h3>
           <ul className="flex flex-col gap-2">
             {resolvedContributions.map((item) => (
               <li key={item.questionId}>
-                <article className="rounded-lg border border-[#e5e7eb] bg-white px-3 py-2.5">
+                <article className="rounded-lg border border-[var(--clinical-outline)] bg-white px-3 py-2.5">
                   <p className="text-sm leading-snug text-[var(--clinical-on-surface-variant)]">
                     <span className="font-semibold text-[var(--clinical-on-surface)]">
                       {item.questionCode}
@@ -119,7 +119,7 @@ export function GuidancePanel({
                       {item.deferralNote}
                     </p>
                   )}
-                  <p className="mt-1.5 text-xs leading-snug text-[#727783]">
+                  <p className="mt-1.5 text-xs leading-snug text-[var(--clinical-on-surface-variant)]">
                     {item.reference}
                   </p>
                 </article>
@@ -130,7 +130,7 @@ export function GuidancePanel({
       )}
 
       <section className="mt-6">
-        <h3 className="mb-3 text-sm font-medium text-[#727783]">
+        <h3 className="mb-3 text-sm font-medium text-[var(--clinical-on-surface-variant)]">
           Reference guidance
         </h3>
         {referenceLinks.length > 0 ? (
@@ -139,7 +139,7 @@ export function GuidancePanel({
               <li key={item.id}>
                 <button
                   type="button"
-                  className="group flex w-full items-center gap-3 rounded-lg border border-[#e5e7eb] bg-white px-3 py-3 text-left transition-colors hover:border-[var(--clinical-outline-variant)] hover:bg-[var(--clinical-surface)]"
+                  className="group flex w-full items-center gap-3 rounded-lg border border-[var(--clinical-outline)] bg-white px-3 py-3 text-left transition-colors hover:border-[var(--clinical-outline-variant)] hover:bg-[var(--clinical-surface)]"
                 >
                   <span className="flex h-8 w-8 shrink-0 items-center justify-center text-violet-600">
                     <BookIcon className="h-5 w-5" />
@@ -147,13 +147,13 @@ export function GuidancePanel({
                   <span className="min-w-0 flex-1 text-sm font-medium leading-snug text-[var(--clinical-on-surface)]">
                     {item.label}
                   </span>
-                  <ChevronRightIcon className="h-4 w-4 shrink-0 text-[#c2c6d4] transition-colors group-hover:text-[#727783]" />
+                  <ChevronRightIcon className="h-4 w-4 shrink-0 text-[var(--clinical-outline-variant)] transition-colors group-hover:text-[var(--clinical-on-surface-variant)]" />
                 </button>
               </li>
             ))}
           </ul>
         ) : (
-          <p className="rounded-lg border border-dashed border-[var(--clinical-outline)] bg-white px-3 py-3 text-sm text-[#727783]">
+          <p className="rounded-lg border border-dashed border-[var(--clinical-outline)] bg-white px-3 py-3 text-sm text-[var(--clinical-on-surface-variant)]">
             GSBD guides appear here when the donor answers Yes to a question
             that links to a reference section.
           </p>
@@ -179,11 +179,16 @@ function StatusBadge({
   };
 
   const styles: Record<AggregatedInterviewGuidance["overallStatus"], string> = {
-    eligible: "bg-emerald-50 text-emerald-800 border-emerald-200",
-    restricted: "bg-amber-50 text-amber-900 border-amber-200",
-    deferred: "bg-rose-50 text-rose-900 border-rose-200",
-    pending: "bg-slate-50 text-slate-700 border-slate-200",
-    review: "bg-blue-50 text-blue-900 border-blue-200",
+    eligible:
+      "bg-[#f3faef] text-[var(--clinical-success)] border-[#c9e1bd]",
+    restricted:
+      "bg-[var(--clinical-warning-subtle)] text-[var(--clinical-warning)] border-[var(--clinical-warning-subtle-border)]",
+    deferred:
+      "bg-[var(--clinical-primary-container)] text-[var(--clinical-primary)] border-[var(--clinical-primary-subtle-border)]",
+    pending:
+      "bg-[var(--clinical-surface-insights)] text-[var(--clinical-on-surface-variant)] border-[var(--clinical-outline)]",
+    review:
+      "bg-[var(--clinical-primary-container)] text-[var(--clinical-primary-dark)] border-[var(--clinical-primary-subtle-border)]",
   };
 
   return (

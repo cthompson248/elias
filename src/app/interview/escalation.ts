@@ -18,25 +18,29 @@ export const escalationMeta: Record<EscalationLevel, EscalationMeta> = {
     level: "dsna",
     label: "DSNA — manage per GSBD",
     shortLabel: "DSNA",
-    className: "bg-slate-100 text-slate-700 border-slate-200",
+    className:
+      "bg-[var(--clinical-surface-insights)] text-[var(--clinical-on-surface-variant)] border-[var(--clinical-outline)]",
   },
   dsna_if_allowed: {
     level: "dsna_if_allowed",
     label: "DSNA — only for allowed scenarios (see WI)",
     shortLabel: "DSNA if allowed",
-    className: "bg-blue-50 text-blue-800 border-blue-200",
+    className:
+      "bg-[var(--clinical-primary-container)] text-[var(--clinical-primary-dark)] border-[var(--clinical-primary-subtle-border)]",
   },
   consult_nurse: {
     level: "consult_nurse",
     label: "Consult nurse before proceeding",
     shortLabel: "Nurse consult",
-    className: "bg-amber-50 text-amber-800 border-amber-200",
+    className:
+      "bg-[var(--clinical-warning-subtle)] text-[var(--clinical-warning)] border-[var(--clinical-warning-subtle-border)]",
   },
   nurse_takeover: {
     level: "nurse_takeover",
     label: "Nurse must take over interview",
     shortLabel: "Nurse takeover",
-    className: "bg-rose-50 text-rose-800 border-rose-200",
+    className:
+      "bg-[var(--clinical-primary-container)] text-[var(--clinical-primary)] border-[var(--clinical-primary-subtle-border)]",
   },
 };
 

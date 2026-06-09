@@ -94,7 +94,7 @@ export default function InterviewSelectionPage() {
       <header className="shrink-0 border-b border-[var(--clinical-outline)] bg-white px-6 py-3">
         <div className="flex items-center justify-between gap-4">
           <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-wider text-[#727783]">
+            <p className="text-xs font-semibold uppercase tracking-wider text-[var(--clinical-on-surface-variant)]">
               Pre-interview · Load review queue
             </p>
             <h1 className="font-[family-name:var(--font-public-sans)] text-lg font-semibold">
@@ -138,14 +138,14 @@ export default function InterviewSelectionPage() {
           <ActionButton onClick={clearSelection} variant="muted">
             Clear
           </ActionButton>
-          <p className="w-full text-xs text-blue-800 lg:hidden">
+          <p className="w-full text-xs text-[var(--clinical-on-surface-variant)] lg:hidden">
             Prototype: mock tablet Yes responses until digital questionnaire API is connected.
           </p>
         </div>
       </div>
 
       {visibleCount === 0 ? (
-        <p className="flex flex-1 items-center justify-center text-sm text-[#727783]">
+        <p className="flex flex-1 items-center justify-center text-sm text-[var(--clinical-on-surface-variant)]">
           No questions match your search.
         </p>
       ) : (
@@ -160,7 +160,7 @@ export default function InterviewSelectionPage() {
                   key={group.category}
                   className="shrink-0 rounded-lg border border-[var(--clinical-outline)] bg-white lg:min-h-0 lg:flex-1 lg:overflow-hidden lg:flex lg:flex-col"
                 >
-                  <h2 className="shrink-0 border-b border-[var(--clinical-outline)] bg-[var(--clinical-surface)] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-[#727783]">
+                  <h2 className="shrink-0 border-b border-[var(--clinical-outline)] bg-[var(--clinical-surface)] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--clinical-on-surface-variant)]">
                     {group.category}
                   </h2>
                   <ul className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
@@ -190,7 +190,7 @@ export default function InterviewSelectionPage() {
           type="button"
           disabled={selectedIds.size === 0}
           onClick={continueToReview}
-          className="rounded-lg bg-[var(--clinical-primary-dark)] px-5 py-2 text-sm font-semibold text-white hover:bg-[var(--clinical-primary)] disabled:cursor-not-allowed disabled:bg-[#c2c6d4]"
+          className="rounded-lg bg-[var(--clinical-primary-dark)] px-5 py-2 text-sm font-semibold text-white hover:bg-[var(--clinical-primary)] disabled:cursor-not-allowed disabled:bg-[var(--clinical-outline-variant)]"
         >
           Continue to interview
         </button>
@@ -230,7 +230,7 @@ function SelectionRow({
     <li className="border-b border-[var(--clinical-outline)] last:border-b-0">
       <label
         className={`flex cursor-pointer items-center gap-2 px-2 py-1.5 transition-colors hover:bg-[var(--clinical-surface)] ${
-          selected ? "bg-[#eef4fc]/60" : ""
+          selected ? "bg-[var(--clinical-primary-container)]/60" : ""
         }`}
       >
         <input
@@ -251,10 +251,10 @@ function SelectionRow({
         <span
           className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold ${
             isYes
-              ? "bg-emerald-50 text-emerald-700"
+              ? "bg-[#f3faef] text-[var(--clinical-success)]"
               : question.tabletResponse === "no"
-                ? "bg-slate-100 text-slate-500"
-                : "bg-amber-50 text-amber-700"
+                ? "bg-[var(--clinical-surface-insights)] text-[var(--clinical-on-surface-variant)]"
+                : "bg-[var(--clinical-warning-subtle)] text-[var(--clinical-warning)]"
           }`}
         >
           {isYes ? "Y" : question.tabletResponse === "no" ? "N" : "—"}
@@ -280,7 +280,7 @@ function ActionButton({
       className={`shrink-0 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
         variant === "muted"
           ? "border-[var(--clinical-outline)] bg-white text-[var(--clinical-on-surface-variant)] hover:bg-[var(--clinical-surface)]"
-          : "border-[var(--clinical-primary)] bg-white text-[var(--clinical-primary-dark)] hover:bg-[#eef4fc]"
+          : "border-[var(--clinical-primary)] bg-white text-[var(--clinical-primary-dark)] hover:bg-[var(--clinical-primary-container)]"
       }`}
     >
       {children}

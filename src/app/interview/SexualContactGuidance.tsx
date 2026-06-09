@@ -123,7 +123,7 @@ export function C14ScenarioSelection({
           onChange={(e) => onCustomInputChange(e.target.value)}
           onKeyDown={handleCustomKeyDown}
           placeholder="Or type a custom response..."
-          className="mt-3 w-full rounded-lg border border-[#e5e7eb] bg-[var(--clinical-surface)] px-3 py-2.5 text-sm outline-none placeholder:text-[#727783] focus:border-[var(--clinical-primary)] focus:bg-white"
+          className="mt-3 w-full rounded-lg border border-[var(--clinical-outline)] bg-[var(--clinical-surface)] px-3 py-2.5 text-sm outline-none placeholder:text-[var(--clinical-on-surface-variant)] focus:border-[var(--clinical-primary)] focus:bg-white"
         />
       </QuestionPanelCard>
 
@@ -151,7 +151,7 @@ export function SexualContactGuidance({
   return (
     <>
       {state.uncertain && (
-        <article className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-4 text-sm leading-6 text-blue-900">
+        <article className="rounded-xl border border-[var(--clinical-primary-subtle-border)] bg-[var(--clinical-primary-container)] px-4 py-4 text-sm leading-6 text-[var(--clinical-on-surface)]">
           <p className="font-semibold">Needs nurse review</p>
           <p className="mt-1">
             The selected scenario could not be matched confidently to GSBD. Hand

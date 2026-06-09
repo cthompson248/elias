@@ -3,7 +3,7 @@
 import type { KeyboardEvent, ReactNode } from "react";
 
 const questionCardClassName =
-  "rounded-xl border border-[#e5e7eb] bg-white p-5 shadow-sm";
+  "rounded-xl border border-[var(--clinical-outline)] bg-white p-5 shadow-sm";
 
 export function QuestionPanelCard({
   title,
@@ -46,9 +46,9 @@ export function InterviewNotesCard({
 }) {
   return (
     <div
-      className={`flex items-center gap-2 rounded-lg border border-[#e5e7eb] bg-[var(--clinical-surface)] px-3 py-2 ${className}`}
+      className={`flex items-center gap-2 rounded-lg border border-[var(--clinical-outline)] bg-[var(--clinical-surface)] px-3 py-2 ${className}`}
     >
-      <NotesIcon className="h-4 w-4 shrink-0 text-[#727783]" />
+      <NotesIcon className="h-4 w-4 shrink-0 text-[var(--clinical-on-surface-variant)]" />
       <input
         type="text"
         value={value}
@@ -56,7 +56,7 @@ export function InterviewNotesCard({
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={onKeyDown}
         placeholder={placeholder}
-        className="min-w-0 flex-1 border-0 bg-transparent text-sm outline-none placeholder:text-[#727783]"
+        className="min-w-0 flex-1 border-0 bg-transparent text-sm outline-none placeholder:text-[var(--clinical-on-surface-variant)]"
       />
     </div>
   );
@@ -84,8 +84,8 @@ export function BinaryChoiceButtons({
         onClick={onSelectYes}
         className={`rounded-lg border-2 px-4 py-3 text-sm font-semibold transition-colors ${
           yesSelected
-            ? "border-[var(--clinical-primary)] bg-[var(--clinical-primary)]/5 text-[var(--clinical-primary)]"
-            : "border-[#e5e7eb] bg-white text-[var(--clinical-on-surface-variant)] hover:border-[#c2c6d4]"
+            ? "clinical-toggle-yes-selected"
+            : "border-[var(--clinical-outline)] bg-white text-[var(--clinical-on-surface-variant)] hover:border-[var(--clinical-outline-variant)]"
         }`}
       >
         Yes
@@ -97,8 +97,8 @@ export function BinaryChoiceButtons({
         onClick={onSelectNo}
         className={`rounded-lg border-2 px-4 py-3 text-sm font-semibold transition-colors ${
           noSelected
-            ? "border-slate-500 bg-slate-50 text-slate-800"
-            : "border-[#e5e7eb] bg-white text-[var(--clinical-on-surface-variant)] hover:border-[#c2c6d4]"
+            ? "border-[var(--clinical-outline-variant)] bg-[var(--clinical-surface-insights)] text-[var(--clinical-on-surface)]"
+            : "border-[var(--clinical-outline)] bg-white text-[var(--clinical-on-surface-variant)] hover:border-[var(--clinical-outline-variant)]"
         }`}
       >
         No
@@ -126,8 +126,8 @@ export function FollowUpOptionPill({
       onClick={onClick}
       className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
         selected
-          ? "border-emerald-500 bg-emerald-50 text-emerald-800"
-          : "border-[#e5e7eb] bg-white text-[var(--clinical-on-surface)] hover:border-[#c2c6d4]"
+          ? "border-[var(--clinical-success)] bg-[#f3faef] text-[var(--clinical-success)]"
+          : "border-[var(--clinical-outline)] bg-white text-[var(--clinical-on-surface)] hover:border-[var(--clinical-outline-variant)]"
       }`}
     >
       {selected && <CheckIcon className="h-3.5 w-3.5 shrink-0" />}
@@ -152,46 +152,49 @@ export function FollowUpCompleteCard({
     cleared: {
       title: "No follow-up needed",
       body: "A No answer clears this item — see Guidance for your overall eligibility.",
-      articleClass: "border-emerald-200 bg-emerald-50/80",
-      iconClass: "bg-emerald-600",
-      titleClass: "text-emerald-950",
-      bodyClass: "text-emerald-900",
+      articleClass: "border-[#c9e1bd] bg-[#f3faef]/80",
+      iconClass: "bg-[var(--clinical-success)]",
+      titleClass: "text-[var(--clinical-success)]",
+      bodyClass: "text-[var(--clinical-on-surface-variant)]",
       icon: "check" as const,
     },
     complete: {
       title: "No further questions for this item",
       body: "See the Guidance panel for what to tell the donor.",
-      articleClass: "border-emerald-200 bg-emerald-50/80",
-      iconClass: "bg-emerald-600",
-      titleClass: "text-emerald-950",
-      bodyClass: "text-emerald-900",
+      articleClass: "border-[#c9e1bd] bg-[#f3faef]/80",
+      iconClass: "bg-[var(--clinical-success)]",
+      titleClass: "text-[var(--clinical-success)]",
+      bodyClass: "text-[var(--clinical-on-surface-variant)]",
       icon: "check" as const,
     },
     restricted: {
       title: "Restricted donation",
       body: "See the Guidance panel for what to tell the donor.",
-      articleClass: "border-amber-200 bg-amber-50/90",
-      iconClass: "bg-amber-500",
-      titleClass: "text-amber-950",
-      bodyClass: "text-amber-900",
+      articleClass:
+        "border-[var(--clinical-warning-subtle-border)] bg-[var(--clinical-warning-subtle)]/90",
+      iconClass: "bg-[var(--clinical-warning)]",
+      titleClass: "text-[var(--clinical-warning)]",
+      bodyClass: "text-[var(--clinical-on-surface-variant)]",
       icon: "alert" as const,
     },
     review: {
       title: "Nurse review needed",
       body: "See the Guidance panel for what to tell the donor.",
-      articleClass: "border-amber-200 bg-amber-50/90",
-      iconClass: "bg-amber-500",
-      titleClass: "text-amber-950",
-      bodyClass: "text-amber-900",
+      articleClass:
+        "border-[var(--clinical-warning-subtle-border)] bg-[var(--clinical-warning-subtle)]/90",
+      iconClass: "bg-[var(--clinical-warning)]",
+      titleClass: "text-[var(--clinical-warning)]",
+      bodyClass: "text-[var(--clinical-on-surface-variant)]",
       icon: "alert" as const,
     },
     defer: {
       title: "Not donating today",
       body: "See the Guidance panel for what to tell the donor.",
-      articleClass: "border-rose-200 bg-rose-50/90",
-      iconClass: "bg-rose-500",
-      titleClass: "text-rose-950",
-      bodyClass: "text-rose-900",
+      articleClass:
+        "border-[var(--clinical-primary-subtle-border)] bg-[var(--clinical-primary-container)]/90",
+      iconClass: "bg-[var(--clinical-primary)]",
+      titleClass: "text-[var(--clinical-primary-dark)]",
+      bodyClass: "text-[var(--clinical-on-surface-variant)]",
       icon: "alert" as const,
     },
   }[variant];
@@ -231,15 +234,23 @@ export function GuidanceActionPanel({
   footer?: string;
 }) {
   return (
-    <article className="flex gap-4 rounded-xl border border-emerald-200 bg-emerald-50 p-5">
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white">
+    <article className="flex gap-4 rounded-xl border border-[#c9e1bd] bg-[#f3faef] p-5">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--clinical-success)] text-white">
         <CheckIcon className="h-5 w-5" />
       </span>
       <div className="min-w-0">
-        <p className="text-base font-semibold text-emerald-950">{title}</p>
-        <p className="mt-1 text-sm font-medium text-emerald-900">{summary}</p>
-        <p className="mt-2 text-sm leading-6 text-emerald-900">{detail}</p>
-        <p className="mt-3 text-sm text-emerald-800">{footer}</p>
+        <p className="text-base font-semibold text-[var(--clinical-success)]">
+          {title}
+        </p>
+        <p className="mt-1 text-sm font-medium text-[var(--clinical-on-surface)]">
+          {summary}
+        </p>
+        <p className="mt-2 text-sm leading-6 text-[var(--clinical-on-surface-variant)]">
+          {detail}
+        </p>
+        <p className="mt-3 text-sm text-[var(--clinical-on-surface-variant)]">
+          {footer}
+        </p>
       </div>
     </article>
   );
