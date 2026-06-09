@@ -1,15 +1,13 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { donor } from "./data";
+import { InterviewHeader } from "./InterviewHeader";
 import {
   groupBankByCategory,
   questionBank,
   type QuestionBankEntry,
 } from "./question-bank";
-import { InterviewRoleSwitcher } from "./InterviewRoleSwitcher";
 import {
   getTabletYesIds,
   loadInterviewSelection,
@@ -91,36 +89,7 @@ export default function InterviewSelectionPage() {
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-[var(--clinical-surface)] text-[var(--clinical-on-surface)]">
-      <header className="shrink-0 border-b border-[var(--clinical-outline)] bg-white px-6 py-3">
-        <div className="flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-wider text-[var(--clinical-on-surface-variant)]">
-              Pre-interview · Load review queue
-            </p>
-            <h1 className="font-[family-name:var(--font-public-sans)] text-lg font-semibold">
-              Select questions for review
-            </h1>
-            <p className="text-sm text-[var(--clinical-on-surface-variant)]">
-              {donor.name} · {donor.donorId}
-            </p>
-          </div>
-          <div className="flex shrink-0 items-center gap-3">
-            <InterviewRoleSwitcher />
-            <span className="hidden text-sm text-[var(--clinical-on-surface-variant)] lg:inline">
-              <span className="font-semibold text-[var(--clinical-on-surface)]">
-                {selectedIds.size}
-              </span>{" "}
-              selected · {visibleCount} shown
-            </span>
-            <Link
-              href="/"
-              className="text-sm font-medium text-[var(--clinical-on-surface-variant)] hover:text-[var(--clinical-on-surface)]"
-            >
-              Home
-            </Link>
-          </div>
-        </div>
-      </header>
+      <InterviewHeader activeNav="profile" />
 
       <div className="shrink-0 border-b border-[var(--clinical-outline)] bg-white px-6 py-3">
         <div className="flex flex-wrap items-center gap-3">
