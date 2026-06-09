@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
-  clinicalInsightByFlow,
   donor,
   filterChecklistQuestions,
   getChecklistCounts,
@@ -18,23 +17,26 @@ import {
   type QuestionReviewStatus,
   type ScreeningQuestionFlow,
 } from "../data";
+import { GuidancePanel } from "../GuidancePanel";
 import {
-  buildB5ClinicalInsight,
+  buildAggregatedInterviewGuidance,
+  getFollowUpCompleteVariant,
+  getQuestionGuidanceContribution,
+  isQuestionFollowUpComplete,
+} from "../interview-guidance";
+import {
   HazardousActivityGuidance,
   type HazardousActivityState,
 } from "../HazardousActivityGuidance";
 import { lookupHazardousActivity } from "../hazardous-activities";
 import {
   FollowUpOptionPill,
+  FollowUpCompleteCard,
+  type FollowUpCompleteVariant,
+  InterviewNotesCard,
   QuestionPanelCard,
 } from "../interview-panel-cards";
 import {
-  buildC8ClinicalInsight,
-  C8MultiplePartnersGuidance,
-  parseC8AnalSexResponse,
-} from "../C8MultiplePartnersGuidance";
-import {
-  buildC14ClinicalInsight,
   C14ScenarioSelection,
   deriveC14GuidanceState,
   type C14ScenarioSelectionState,
@@ -111,6 +113,32 @@ export default function InterviewReviewPage() {
     [allQuestions, questionResponses]
   );
 
+  const guidanceInput = useMemo(
+    () => ({
+      reviewQueue,
+      questionResponses,
+      followUpAnswers,
+      notesByQuestion,
+      b5HazardousState,
+      c14Scenario,
+      c14PartnerDonor,
+    }),
+    [
+      reviewQueue,
+      questionResponses,
+      followUpAnswers,
+      notesByQuestion,
+      b5HazardousState,
+      c14Scenario,
+      c14PartnerDonor,
+    ]
+  );
+
+  const aggregatedGuidance = useMemo(
+    () => buildAggregatedInterviewGuidance(guidanceInput),
+    [guidanceInput]
+  );
+
   const checklistCounts = getChecklistCounts(allQuestions, reviewQueueIds);
   const filteredQuestions = filterChecklistQuestions(
     allQuestions,
@@ -128,49 +156,25 @@ export default function InterviewReviewPage() {
   const activeFollowUps = activeFlowKey
     ? (followUpAnswers[activeFlowKey] ?? {})
     : {};
-  const c8AnalSexResponse =
-    activeFlowKey === "c8"
-      ? parseC8AnalSexResponse(activeFollowUps.c8a?.pillId)
-      : null;
 
-  const clinicalInsight =
-    activeFlowKey === "b5"
-      ? buildB5ClinicalInsight(
-          b5HazardousState.matchedId,
-          b5HazardousState.donorDecision
-        )
-      : activeFlowKey === "c8"
-        ? buildC8ClinicalInsight(c8AnalSexResponse)
-      : activeFlowKey === "c14"
-        ? buildC14ClinicalInsight(c14GuidanceState)
-        : activeFlowKey
-          ? clinicalInsightByFlow[activeFlowKey]
-          : null;
   const notes = notesByQuestion[activeItemId] ?? "";
 
-  const showDeferralNote =
-    (activeFlowKey === "c8" && c8AnalSexResponse === "yes") ||
-    (activeFlowKey === "c14" &&
-      c14GuidanceState.lookupAttempted &&
-      !c14GuidanceState.uncertain &&
-      c14GuidanceState.showPartnerDonorQuestion &&
-      c14GuidanceState.partnerIsLifebloodDonor === false) ||
-    (activeFlowKey === "c14" &&
-      c14GuidanceState.lookupAttempted &&
-      !c14GuidanceState.uncertain &&
-      !c14GuidanceState.showPartnerDonorQuestion &&
-      Boolean(c14GuidanceState.matchedId)) ||
-    (activeFlowKey === "b5" && b5HazardousState.donorDecision === "defer") ||
-    (donorResponse === "yes" &&
-    (activeFlowKey === "b6"
-      ? ["yes-once", "ongoing", "prescribed", "not-in-notes"].includes(
-          activeFollowUps.nsaids?.pillId ?? ""
+  const activeFollowUpComplete = activeQuestion
+    ? isQuestionFollowUpComplete(activeQuestion, donorResponse, {
+        followUpAnswers,
+        b5HazardousState,
+        c14Scenario,
+        c14PartnerDonor,
+        notesByQuestion,
+      })
+    : false;
+
+  const activeFollowUpCompleteVariant =
+    activeQuestion && donorResponse === "yes"
+      ? getFollowUpCompleteVariant(
+          getQuestionGuidanceContribution(activeQuestion, guidanceInput)
         )
-      : activeFlowKey === "c11"
-        ? Boolean(activeFollowUps.procedure?.pillId)
-        : activeFlowKey === "a15"
-          ? activeFollowUps.a15a?.pillId === "yes"
-          : false));
+      : "complete";
 
   let effectiveEscalation: EscalationLevel = activeQuestion
     ? resolveInterviewEscalation(
@@ -345,9 +349,6 @@ export default function InterviewReviewPage() {
               interviewRole={interviewRole}
               donorResponse={donorResponse}
               readOnly={!canEdit}
-              onDonorResponseChange={(response) =>
-                setQuestionResponse(activeItemId, response)
-              }
               followUpAnswers={activeFollowUps}
               onSelectPill={(followUpId, pillId) =>
                 updateFollowUp(activeFlowKey, followUpId, { pillId })
@@ -426,31 +427,17 @@ export default function InterviewReviewPage() {
                 setC14Scenario((prev) => ({ ...prev, customInput: value }))
               }
               onPartnerLifebloodDonorChange={setC14PartnerDonor}
+              followUpComplete={activeFollowUpComplete}
+              followUpCompleteVariant={activeFollowUpCompleteVariant}
             />
           ) : activeQuestion ? (
             <div className="flex flex-1 flex-col overflow-y-auto bg-white px-8 py-8">
               <p className="text-xs font-semibold uppercase tracking-wider text-[#727783]">
                 {activeQuestion.code} · {activeQuestion.category}
               </p>
-              <div className="mt-2 flex items-center justify-between gap-6">
-                <h1 className="min-w-0 flex-1 font-[family-name:var(--font-public-sans)] text-2xl font-semibold leading-tight">
+              <h1 className="mt-2 font-[family-name:var(--font-public-sans)] text-2xl font-semibold leading-tight">
                   {activeQuestion.question}
                 </h1>
-                <div className="flex shrink-0 items-center gap-2">
-                  <DonorResponseButton
-                    label="Yes"
-                    selected={donorResponse === "yes"}
-                    variant="yes"
-                    onClick={() => setQuestionResponse(activeItemId, "yes")}
-                  />
-                  <DonorResponseButton
-                    label="No"
-                    selected={donorResponse === "no"}
-                    variant="no"
-                    onClick={() => setQuestionResponse(activeItemId, "no")}
-                  />
-                </div>
-              </div>
             </div>
           ) : (
             <div className="flex flex-1 items-center justify-center p-8 text-sm text-[var(--clinical-on-surface-variant)]">
@@ -474,71 +461,10 @@ export default function InterviewReviewPage() {
               </div>
             )}
 
-            {clinicalInsight ? (
-              <article className="rounded-xl border border-[var(--clinical-outline)] border-l-4 border-l-[var(--clinical-secondary)] bg-white p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--clinical-secondary)]">
-                  Analysis
-                  {activeQuestion && (
-                    <span className="ml-2 font-mono normal-case text-[#727783]">
-                      {activeQuestion.code}
-                    </span>
-                  )}
-                </p>
-                <p className="mt-2 font-[family-name:var(--font-public-sans)] text-base font-semibold">
-                  {clinicalInsight.title}
-                </p>
-                <p className="mt-2 text-sm leading-6 text-[var(--clinical-on-surface-variant)]">
-                  {clinicalInsight.body}
-                </p>
-                {clinicalInsight.deferralNote && showDeferralNote && (
-                    <p className="mt-3 rounded-lg bg-teal-50 px-3 py-2 text-xs font-medium text-teal-800">
-                      {clinicalInsight.deferralNote}
-                    </p>
-                  )}
-                <div className="mt-4 flex items-start gap-2 rounded-lg bg-[var(--clinical-surface)] px-3 py-2.5 text-xs text-[var(--clinical-on-surface-variant)]">
-                  <BookIcon className="mt-0.5 h-4 w-4 shrink-0 text-[#727783]" />
-                  <span>
-                    <span className="font-semibold">Ref: </span>
-                    {clinicalInsight.reference}
-                  </span>
-                </div>
-              </article>
-            ) : (
-              <p className="rounded-xl border border-dashed border-[var(--clinical-outline)] bg-white p-4 text-sm text-[#727783]">
-                Select a flagged question to view clinical insights.
-              </p>
-            )}
-
-            <section className="mt-6">
-              <h3 className="mb-3 text-sm font-medium text-[#727783]">
-                Reference guidance
-              </h3>
-              {relevantReferenceGuidance.length > 0 ? (
-                <ul className="flex flex-col gap-2">
-                  {relevantReferenceGuidance.map((item) => (
-                    <li key={item.id}>
-                      <button
-                        type="button"
-                        className="group flex w-full items-center gap-3 rounded-lg border border-[#e5e7eb] bg-white px-3 py-3 text-left transition-colors hover:border-[var(--clinical-outline-variant)] hover:bg-[var(--clinical-surface)]"
-                      >
-                        <span className="flex h-8 w-8 shrink-0 items-center justify-center text-violet-600">
-                          <BookIcon className="h-5 w-5" />
-                        </span>
-                        <span className="min-w-0 flex-1 text-sm font-medium leading-snug text-[var(--clinical-on-surface)]">
-                          {item.label}
-                        </span>
-                        <ChevronRightIcon className="h-4 w-4 shrink-0 text-[#c2c6d4] transition-colors group-hover:text-[#727783]" />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="rounded-lg border border-dashed border-[var(--clinical-outline)] bg-white px-3 py-3 text-sm text-[#727783]">
-                  GSBD guides appear here when the donor answers Yes to a
-                  question that links to a reference section.
-                </p>
-              )}
-            </section>
+            <GuidancePanel
+              guidance={aggregatedGuidance}
+              referenceLinks={relevantReferenceGuidance}
+            />
           </div>
         </aside>
       </div>
@@ -722,7 +648,6 @@ function ScreeningDetailPanel({
   interviewRole,
   donorResponse,
   readOnly,
-  onDonorResponseChange,
   followUpAnswers,
   onSelectPill,
   onCustomChange,
@@ -738,13 +663,14 @@ function ScreeningDetailPanel({
   onC14RemoveCustomPill,
   onC14CustomInputChange,
   onPartnerLifebloodDonorChange,
+  followUpComplete,
+  followUpCompleteVariant,
 }: {
   flow: ScreeningQuestionFlow;
   questionCode?: string;
   interviewRole: InterviewRole;
   donorResponse: DonorScreeningResponse | null;
   readOnly: boolean;
-  onDonorResponseChange: (response: DonorScreeningResponse) => void;
   followUpAnswers: Record<string, FollowUpAnswer>;
   onSelectPill: (followUpId: string, pillId: string | null) => void;
   onCustomChange: (followUpId: string, custom: string) => void;
@@ -762,6 +688,8 @@ function ScreeningDetailPanel({
   onC14RemoveCustomPill?: (label: string) => void;
   onC14CustomInputChange?: (value: string) => void;
   onPartnerLifebloodDonorChange?: (value: boolean) => void;
+  followUpComplete: boolean;
+  followUpCompleteVariant: FollowUpCompleteVariant;
 }) {
   const followUpTrigger = flow.followUpTrigger ?? flow.donorResponse;
   const showFollowUps = donorResponse === followUpTrigger;
@@ -781,8 +709,6 @@ function ScreeningDetailPanel({
     onC14RemoveCustomPill &&
     onC14CustomInputChange &&
     onPartnerLifebloodDonorChange;
-  const usesContextNotesBelowQuestion = showHazardousFlow || showSexualContactFlow;
-
   return (
     <div
       className={`min-h-0 flex-1 overflow-y-auto bg-white px-8 py-8 ${readOnly ? "pointer-events-none opacity-60" : ""}`}
@@ -790,41 +716,41 @@ function ScreeningDetailPanel({
       <p className="text-xs font-semibold uppercase tracking-wider text-[#727783]">
         {questionCode ?? flow.questionNumber} · {flow.section}
       </p>
-      <div className="mt-2 flex items-center justify-between gap-6">
-        <h1 className="min-w-0 flex-1 font-[family-name:var(--font-public-sans)] text-2xl font-semibold leading-tight text-[var(--clinical-on-surface)]">
-          {flow.question}
-        </h1>
-        <div className="flex shrink-0 items-center gap-2">
-          <DonorResponseButton
-            label="Yes"
-            selected={donorResponse === "yes"}
-            variant="yes"
-            onClick={() => onDonorResponseChange("yes")}
-          />
-          <DonorResponseButton
-            label="No"
-            selected={donorResponse === "no"}
-            variant="no"
-            onClick={() => onDonorResponseChange("no")}
-          />
-        </div>
-      </div>
+      <h1 className="mt-2 font-[family-name:var(--font-public-sans)] text-2xl font-semibold leading-tight text-[var(--clinical-on-surface)]">
+        {flow.question}
+      </h1>
+
+      <InterviewNotesCard
+        className="mt-4"
+        value={notes}
+        onChange={onNotesChange}
+        readOnly={readOnly}
+        onKeyDown={
+          showHazardousFlow && onHazardousLookupFromNotes
+            ? (e) => {
+                if (e.key !== "Enter" || e.shiftKey) return;
+                e.preventDefault();
+                onHazardousLookupFromNotes(e.currentTarget.value);
+              }
+            : undefined
+        }
+      />
 
       {showSexualContactFlow && (
-        <C14ScenarioSelection
-          selection={c14Scenario}
-          guidanceState={c14GuidanceState}
-          notes={notes}
-          readOnly={readOnly}
-          onTogglePrecanned={onC14TogglePrecanned}
-          onAddCustomPill={onC14AddCustomPill}
-          onRemoveCustomPill={onC14RemoveCustomPill}
-          onCustomInputChange={onC14CustomInputChange}
-          onNotesChange={onNotesChange}
-          onPartnerLifebloodDonorChange={
-            onPartnerLifebloodDonorChange ?? (() => {})
-          }
-        />
+        <>
+          <C14ScenarioSelection
+            selection={c14Scenario}
+            guidanceState={c14GuidanceState}
+            readOnly={readOnly}
+            onTogglePrecanned={onC14TogglePrecanned}
+            onAddCustomPill={onC14AddCustomPill}
+            onRemoveCustomPill={onC14RemoveCustomPill}
+            onCustomInputChange={onC14CustomInputChange}
+            onPartnerLifebloodDonorChange={
+              onPartnerLifebloodDonorChange ?? (() => {})
+            }
+          />
+        </>
       )}
 
       {showFollowUps && !flow.hazardousActivity && !flow.sexualContactGuidance && (
@@ -850,58 +776,7 @@ function ScreeningDetailPanel({
             />
           ))}
 
-          {flow.c8MultiplePartnersGuidance && (
-            <C8MultiplePartnersGuidance
-              analSexResponse={parseC8AnalSexResponse(
-                followUpAnswers.c8a?.pillId
-              )}
-            />
-          )}
         </div>
-      )}
-
-      {!usesContextNotesBelowQuestion && (
-        <section className="mt-8">
-          <h2 className="text-base font-semibold text-[var(--clinical-on-surface)]">
-            Notes
-          </h2>
-          <textarea
-            value={notes}
-            onChange={(e) => onNotesChange(e.target.value)}
-            placeholder={
-              donorResponse === "no"
-                ? "Add any additional context for this negative response…"
-                : "Record any additional observations or verbal clarifications..."
-            }
-            rows={5}
-            className="mt-3 w-full resize-none rounded-xl border border-[var(--clinical-outline)] bg-[var(--clinical-surface)] px-4 py-3 text-sm leading-6 outline-none placeholder:text-[#727783] focus:border-[var(--clinical-primary)] focus:bg-white focus:ring-2 focus:ring-[var(--clinical-primary)]/20"
-          />
-        </section>
-      )}
-
-      {showHazardousFlow && (
-        <section className="mt-8">
-          <h2 className="text-base font-semibold text-[var(--clinical-on-surface)]">
-            Notes
-          </h2>
-          <textarea
-            value={notes}
-            onChange={(e) => onNotesChange(e.target.value)}
-            onKeyDown={(e) => {
-              if (
-                e.key === "Enter" &&
-                !e.shiftKey &&
-                onHazardousLookupFromNotes
-              ) {
-                e.preventDefault();
-                onHazardousLookupFromNotes(e.currentTarget.value);
-              }
-            }}
-            placeholder="Record any additional observations or verbal clarifications..."
-            rows={5}
-            className="mt-3 w-full resize-none rounded-xl border border-[var(--clinical-outline)] bg-[var(--clinical-surface)] px-4 py-3 text-sm leading-6 outline-none placeholder:text-[#727783] focus:border-[var(--clinical-primary)] focus:bg-white focus:ring-2 focus:ring-[var(--clinical-primary)]/20"
-          />
-        </section>
       )}
 
       {showHazardousFlow && (
@@ -911,6 +786,14 @@ function ScreeningDetailPanel({
           activityNotes={notes}
           onDonorDecision={onHazardousDonorDecision}
         />
+      )}
+
+      {donorResponse === "no" && (
+        <FollowUpCompleteCard variant="cleared" />
+      )}
+
+      {donorResponse === "yes" && followUpComplete && (
+        <FollowUpCompleteCard variant={followUpCompleteVariant} />
       )}
     </div>
   );

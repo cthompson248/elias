@@ -4,8 +4,6 @@ import type { KeyboardEvent } from "react";
 import {
   BinaryChoiceButtons,
   FollowUpOptionPill,
-  GuidanceActionPanel,
-  InterviewNotesCard,
   QuestionPanelCard,
 } from "./interview-panel-cards";
 import {
@@ -22,7 +20,7 @@ export interface SexualContactGuidanceState {
   uncertain: boolean;
   /** Show partner donor follow-up (injecting partner scenario) */
   showPartnerDonorQuestion: boolean;
-  /** Is the partner a current Lifeblood donor? */
+  /** Is your partner a current Lifeblood donor? */
   partnerIsLifebloodDonor: boolean | null;
 }
 
@@ -64,24 +62,20 @@ export function deriveC14GuidanceState(
 export function C14ScenarioSelection({
   selection,
   guidanceState,
-  notes,
   readOnly,
   onTogglePrecanned,
   onAddCustomPill,
   onRemoveCustomPill,
   onCustomInputChange,
-  onNotesChange,
   onPartnerLifebloodDonorChange,
 }: {
   selection: C14ScenarioSelectionState;
   guidanceState: SexualContactGuidanceState;
-  notes: string;
   readOnly?: boolean;
   onTogglePrecanned: (pillId: string) => void;
   onAddCustomPill: (label: string) => void;
   onRemoveCustomPill: (label: string) => void;
   onCustomInputChange: (value: string) => void;
-  onNotesChange: (value: string) => void;
   onPartnerLifebloodDonorChange: (value: boolean) => void;
 }) {
   function handleCustomKeyDown(e: KeyboardEvent<HTMLInputElement>) {
@@ -94,14 +88,8 @@ export function C14ScenarioSelection({
 
   return (
     <div className="mt-6 flex flex-col gap-4">
-      <InterviewNotesCard
-        value={notes}
-        onChange={onNotesChange}
-        readOnly={readOnly}
-      />
-
       <QuestionPanelCard
-        title="Which scenario best describes the donor's situation?"
+        title="Which of these best describes your situation?"
         hint="Select all that apply."
       >
         <div className="flex flex-wrap gap-2">
@@ -185,7 +173,6 @@ export function SexualContactGuidance({
 }
 
 function SexualContactGuidancePanels({
-  entry,
   showPartnerDonorQuestion,
   partnerIsLifebloodDonor,
   onPartnerLifebloodDonorChange,
@@ -197,13 +184,11 @@ function SexualContactGuidancePanels({
 }) {
   const partnerNotDonor = partnerIsLifebloodDonor === false;
   const partnerIsDonor = partnerIsLifebloodDonor === true;
-  const showActions =
-    (showPartnerDonorQuestion && partnerNotDonor) || !showPartnerDonorQuestion;
 
   return (
     <>
       {showPartnerDonorQuestion && (
-        <QuestionPanelCard title="Is the partner a current Lifeblood donor?">
+        <QuestionPanelCard title="Is your partner a current Lifeblood donor?">
           <BinaryChoiceButtons
             yesSelected={partnerIsDonor}
             noSelected={partnerNotDonor}
@@ -212,29 +197,7 @@ function SexualContactGuidancePanels({
           />
         </QuestionPanelCard>
       )}
-
-      {showPartnerDonorQuestion && partnerIsDonor && (
-        <QuestionPanelCard title="Partner is a current Lifeblood donor">
-          <p className="text-sm leading-6 text-[var(--clinical-on-surface-variant)]">
-            {entry.scenarioNotePartnerIsDonor}
-          </p>
-        </QuestionPanelCard>
-      )}
-
-      {showActions && <GuidanceActions entry={entry} />}
     </>
-  );
-}
-
-function GuidanceActions({ entry }: { entry: SexualContactGuidanceEntry }) {
-  const { primary, deferralCode } = entry.actions;
-
-  return (
-    <GuidanceActionPanel
-      title={`Apply deferral ${deferralCode}`}
-      summary={`${primary.donationType} · ${primary.deferralWindow}`}
-      detail={primary.detail}
-    />
   );
 }
 
@@ -256,7 +219,7 @@ export function buildC14ClinicalInsight(
   if (!matched || !state.lookupAttempted) {
     return {
       title: "Flagged: C14 Sexual contact",
-      body: "Select scenario pills that describe the donor's situation.",
+      body: "Select the options that describe your situation.",
       reference: "GSBD — Sexual activity deferrals",
     };
   }
@@ -287,7 +250,7 @@ export function buildC14ClinicalInsight(
   if (state.showPartnerDonorQuestion) {
     return {
       title: `C14 · ${matched.label}`,
-      body: "Confirm whether the partner is a current Lifeblood donor to show the correct GSBD pathway.",
+      body: "Confirm whether your partner is a current Lifeblood donor to show the correct GSBD pathway.",
       reference: "GSBD — Sexual activity deferrals",
     };
   }

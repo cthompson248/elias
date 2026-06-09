@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { KeyboardEvent, ReactNode } from "react";
 
 const questionCardClassName =
   "rounded-xl border border-[#e5e7eb] bg-white p-5 shadow-sm";
@@ -33,34 +33,32 @@ export function InterviewNotesCard({
   value,
   onChange,
   readOnly,
-  placeholder = "Record any additional observations or verbal clarifications...",
+  placeholder = "Add interview notes",
+  className = "",
+  onKeyDown,
 }: {
   value: string;
   onChange: (value: string) => void;
   readOnly?: boolean;
   placeholder?: string;
+  className?: string;
+  onKeyDown?: (event: KeyboardEvent<HTMLInputElement>) => void;
 }) {
   return (
-    <article className={questionCardClassName}>
-      <div className="flex items-start gap-3">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--clinical-surface)] text-[#727783]">
-          <NotesIcon className="h-5 w-5" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-[var(--clinical-on-surface)]">
-            Notes
-          </p>
-          <textarea
-            value={value}
-            disabled={readOnly}
-            onChange={(e) => onChange(e.target.value)}
-            placeholder={placeholder}
-            rows={3}
-            className="mt-3 w-full resize-none rounded-lg border border-[#e5e7eb] bg-[var(--clinical-surface)] px-3 py-2.5 text-sm leading-6 outline-none placeholder:text-[#727783] focus:border-[var(--clinical-primary)] focus:bg-white"
-          />
-        </div>
-      </div>
-    </article>
+    <div
+      className={`flex items-center gap-2 rounded-lg border border-[#e5e7eb] bg-[var(--clinical-surface)] px-3 py-2 ${className}`}
+    >
+      <NotesIcon className="h-4 w-4 shrink-0 text-[#727783]" />
+      <input
+        type="text"
+        value={value}
+        disabled={readOnly}
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={onKeyDown}
+        placeholder={placeholder}
+        className="min-w-0 flex-1 border-0 bg-transparent text-sm outline-none placeholder:text-[#727783]"
+      />
+    </div>
   );
 }
 
@@ -138,6 +136,89 @@ export function FollowUpOptionPill({
   );
 }
 
+export type FollowUpCompleteVariant =
+  | "cleared"
+  | "complete"
+  | "restricted"
+  | "review"
+  | "defer";
+
+export function FollowUpCompleteCard({
+  variant = "complete",
+}: {
+  variant?: FollowUpCompleteVariant;
+}) {
+  const config = {
+    cleared: {
+      title: "No follow-up needed",
+      body: "A No answer clears this item — see Guidance for your overall eligibility.",
+      articleClass: "border-emerald-200 bg-emerald-50/80",
+      iconClass: "bg-emerald-600",
+      titleClass: "text-emerald-950",
+      bodyClass: "text-emerald-900",
+      icon: "check" as const,
+    },
+    complete: {
+      title: "No further questions for this item",
+      body: "See the Guidance panel for what to tell the donor.",
+      articleClass: "border-emerald-200 bg-emerald-50/80",
+      iconClass: "bg-emerald-600",
+      titleClass: "text-emerald-950",
+      bodyClass: "text-emerald-900",
+      icon: "check" as const,
+    },
+    restricted: {
+      title: "Restricted donation",
+      body: "See the Guidance panel for what to tell the donor.",
+      articleClass: "border-amber-200 bg-amber-50/90",
+      iconClass: "bg-amber-500",
+      titleClass: "text-amber-950",
+      bodyClass: "text-amber-900",
+      icon: "alert" as const,
+    },
+    review: {
+      title: "Nurse review needed",
+      body: "See the Guidance panel for what to tell the donor.",
+      articleClass: "border-amber-200 bg-amber-50/90",
+      iconClass: "bg-amber-500",
+      titleClass: "text-amber-950",
+      bodyClass: "text-amber-900",
+      icon: "alert" as const,
+    },
+    defer: {
+      title: "Not donating today",
+      body: "See the Guidance panel for what to tell the donor.",
+      articleClass: "border-rose-200 bg-rose-50/90",
+      iconClass: "bg-rose-500",
+      titleClass: "text-rose-950",
+      bodyClass: "text-rose-900",
+      icon: "alert" as const,
+    },
+  }[variant];
+
+  return (
+    <article
+      className={`mt-6 flex gap-3 rounded-xl border px-4 py-4 ${config.articleClass}`}
+    >
+      <span
+        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white ${config.iconClass}`}
+      >
+        {config.icon === "check" ? (
+          <CheckIcon className="h-5 w-5" />
+        ) : (
+          <AlertIcon className="h-5 w-5" />
+        )}
+      </span>
+      <div>
+        <p className={`font-semibold ${config.titleClass}`}>{config.title}</p>
+        <p className={`mt-1 text-sm leading-6 ${config.bodyClass}`}>
+          {config.body}
+        </p>
+      </div>
+    </article>
+  );
+}
+
 export function GuidanceActionPanel({
   title,
   summary,
@@ -175,6 +256,30 @@ function CheckIcon({ className }: { className?: string }) {
       aria-hidden
     >
       <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function AlertIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden
+    >
+      <path
+        d="M12 9v4M12 17h.01"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }

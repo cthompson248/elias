@@ -533,7 +533,7 @@ export const lifebloodClinicalInsights: Record<
   },
   c14: {
     title: "Flagged: C14 Sexual contact",
-    body: "Select scenario pills that describe the donor's situation.",
+    body: "Select the options that describe your situation.",
     reference: "GSBD — Sexual activity deferrals",
   },
   c11: {

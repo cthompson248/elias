@@ -48,3 +48,12 @@ export const c8AnalSexDeclinedGuidance = {
   explanation:
     "The donor declined to answer C8a. Document privately and consult GSBD — Sexual activity deferrals before proceeding.",
 };
+
+export function parseC8AnalSexResponse(
+  pillId: string | null | undefined
+): C8AnalSexResponse | null {
+  if (pillId === "yes" || pillId === "no" || pillId === "declined") {
+    return pillId;
+  }
+  return null;
+}

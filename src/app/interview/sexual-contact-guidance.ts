@@ -35,17 +35,17 @@ export interface C14ScenarioPill {
 export const c14ScenarioPills: C14ScenarioPill[] = [
   {
     id: "partner-injects",
-    label: "Partner injects drugs",
+    label: "Your partner injects drugs",
     guidanceId: "c14-injecting-partner",
   },
   {
     id: "former-partner",
-    label: "Former partner — injection history",
+    label: "Your former partner has an injection history",
     guidanceId: "c14-former-partner",
   },
   {
     id: "donor-unsure",
-    label: "Donor unsure — needs clarification",
+    label: "You're unsure — needs clarification",
     uncertain: true,
   },
 ];
