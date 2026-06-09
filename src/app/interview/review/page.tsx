@@ -25,16 +25,21 @@ import {
 } from "../HazardousActivityGuidance";
 import { lookupHazardousActivity } from "../hazardous-activities";
 import {
+  FollowUpOptionPill,
+  QuestionPanelCard,
+} from "../interview-panel-cards";
+import {
   buildC8ClinicalInsight,
   C8MultiplePartnersGuidance,
   parseC8AnalSexResponse,
 } from "../C8MultiplePartnersGuidance";
 import {
   buildC14ClinicalInsight,
-  SexualContactGuidance,
+  C14ScenarioSelection,
+  deriveC14GuidanceState,
+  type C14ScenarioSelectionState,
   type SexualContactGuidanceState,
 } from "../SexualContactGuidance";
-import { lookupSexualContactGuidance } from "../sexual-contact-guidance";
 import {
   getAllInterviewQuestions,
   getSessionReviewQueueIds,
@@ -84,12 +89,16 @@ export default function InterviewReviewPage() {
     lookupAttempted: false,
     donorDecision: null,
   });
-  const [c14GuidanceState, setC14GuidanceState] =
-    useState<SexualContactGuidanceState>({
-      matchedId: null,
-      lookupAttempted: false,
-      partnerIsLifebloodDonor: null,
-    });
+  const [c14Scenario, setC14Scenario] = useState<C14ScenarioSelectionState>({
+    selectedPrecannedIds: [],
+    customPills: [],
+    customInput: "",
+  });
+  const [c14PartnerDonor, setC14PartnerDonor] = useState<boolean | null>(null);
+  const c14GuidanceState = useMemo(
+    () => deriveC14GuidanceState(c14Scenario, c14PartnerDonor),
+    [c14Scenario, c14PartnerDonor]
+  );
 
   useEffect(() => {
     if (reviewQueueIds.size === 0) {
@@ -133,10 +142,7 @@ export default function InterviewReviewPage() {
       : activeFlowKey === "c8"
         ? buildC8ClinicalInsight(c8AnalSexResponse)
       : activeFlowKey === "c14"
-        ? buildC14ClinicalInsight(
-            c14GuidanceState.matchedId,
-            c14GuidanceState.partnerIsLifebloodDonor
-          )
+        ? buildC14ClinicalInsight(c14GuidanceState)
         : activeFlowKey
           ? clinicalInsightByFlow[activeFlowKey]
           : null;
@@ -145,7 +151,15 @@ export default function InterviewReviewPage() {
   const showDeferralNote =
     (activeFlowKey === "c8" && c8AnalSexResponse === "yes") ||
     (activeFlowKey === "c14" &&
+      c14GuidanceState.lookupAttempted &&
+      !c14GuidanceState.uncertain &&
+      c14GuidanceState.showPartnerDonorQuestion &&
       c14GuidanceState.partnerIsLifebloodDonor === false) ||
+    (activeFlowKey === "c14" &&
+      c14GuidanceState.lookupAttempted &&
+      !c14GuidanceState.uncertain &&
+      !c14GuidanceState.showPartnerDonorQuestion &&
+      Boolean(c14GuidanceState.matchedId)) ||
     (activeFlowKey === "b5" && b5HazardousState.donorDecision === "defer") ||
     (donorResponse === "yes" &&
     (activeFlowKey === "b6"
@@ -170,6 +184,14 @@ export default function InterviewReviewPage() {
   if (
     activeFlowKey === "b5" &&
     b5HazardousState.donorDecision === "continue"
+  ) {
+    effectiveEscalation = "consult_nurse";
+  }
+
+  if (
+    activeFlowKey === "c14" &&
+    c14GuidanceState.lookupAttempted &&
+    c14GuidanceState.uncertain
   ) {
     effectiveEscalation = "consult_nurse";
   }
@@ -346,13 +368,6 @@ export default function InterviewReviewPage() {
                     donorDecision: null,
                   });
                 }
-                if (activeFlowKey === "c14") {
-                  setC14GuidanceState({
-                    matchedId: null,
-                    lookupAttempted: false,
-                    partnerIsLifebloodDonor: null,
-                  });
-                }
               }}
               hazardousActivityState={
                 activeFlowKey === "b5" ? b5HazardousState : undefined
@@ -368,23 +383,49 @@ export default function InterviewReviewPage() {
               onHazardousDonorDecision={(decision) =>
                 setB5HazardousState((prev) => ({ ...prev, donorDecision: decision }))
               }
-              sexualContactGuidanceState={
+              c14Scenario={
+                activeFlowKey === "c14" ? c14Scenario : undefined
+              }
+              c14GuidanceState={
                 activeFlowKey === "c14" ? c14GuidanceState : undefined
               }
-              onSexualContactLookupFromNotes={(noteText) => {
-                const match = lookupSexualContactGuidance(noteText);
-                setC14GuidanceState({
-                  matchedId: match?.id ?? null,
-                  lookupAttempted: true,
-                  partnerIsLifebloodDonor: null,
+              onC14TogglePrecanned={(pillId) => {
+                setC14Scenario((prev) => {
+                  const selected = prev.selectedPrecannedIds.includes(pillId)
+                    ? prev.selectedPrecannedIds.filter((id) => id !== pillId)
+                    : [...prev.selectedPrecannedIds, pillId];
+                  return { ...prev, selectedPrecannedIds: selected };
                 });
+                setC14PartnerDonor(null);
               }}
-              onPartnerLifebloodDonorChange={(value) =>
-                setC14GuidanceState((prev) => ({
+              onC14AddCustomPill={(label) => {
+                setC14Scenario((prev) => {
+                  if (
+                    prev.customPills.some(
+                      (pill) => pill.toLowerCase() === label.toLowerCase()
+                    )
+                  ) {
+                    return { ...prev, customInput: "" };
+                  }
+                  return {
+                    ...prev,
+                    customPills: [...prev.customPills, label],
+                    customInput: "",
+                  };
+                });
+                setC14PartnerDonor(null);
+              }}
+              onC14RemoveCustomPill={(label) => {
+                setC14Scenario((prev) => ({
                   ...prev,
-                  partnerIsLifebloodDonor: value,
-                }))
+                  customPills: prev.customPills.filter((pill) => pill !== label),
+                }));
+                setC14PartnerDonor(null);
+              }}
+              onC14CustomInputChange={(value) =>
+                setC14Scenario((prev) => ({ ...prev, customInput: value }))
               }
+              onPartnerLifebloodDonorChange={setC14PartnerDonor}
             />
           ) : activeQuestion ? (
             <div className="flex flex-1 flex-col overflow-y-auto bg-white px-8 py-8">
@@ -690,8 +731,12 @@ function ScreeningDetailPanel({
   hazardousActivityState,
   onHazardousLookupFromNotes,
   onHazardousDonorDecision,
-  sexualContactGuidanceState,
-  onSexualContactLookupFromNotes,
+  c14Scenario,
+  c14GuidanceState,
+  onC14TogglePrecanned,
+  onC14AddCustomPill,
+  onC14RemoveCustomPill,
+  onC14CustomInputChange,
   onPartnerLifebloodDonorChange,
 }: {
   flow: ScreeningQuestionFlow;
@@ -710,8 +755,12 @@ function ScreeningDetailPanel({
   onHazardousDonorDecision?: (
     decision: HazardousActivityState["donorDecision"]
   ) => void;
-  sexualContactGuidanceState?: SexualContactGuidanceState;
-  onSexualContactLookupFromNotes?: (noteText: string) => void;
+  c14GuidanceState?: SexualContactGuidanceState;
+  c14Scenario?: C14ScenarioSelectionState;
+  onC14TogglePrecanned?: (pillId: string) => void;
+  onC14AddCustomPill?: (label: string) => void;
+  onC14RemoveCustomPill?: (label: string) => void;
+  onC14CustomInputChange?: (value: string) => void;
   onPartnerLifebloodDonorChange?: (value: boolean) => void;
 }) {
   const followUpTrigger = flow.followUpTrigger ?? flow.donorResponse;
@@ -725,8 +774,13 @@ function ScreeningDetailPanel({
   const showSexualContactFlow =
     flow.sexualContactGuidance &&
     donorResponse === "yes" &&
-    sexualContactGuidanceState &&
-    onSexualContactLookupFromNotes;
+    c14GuidanceState &&
+    c14Scenario &&
+    onC14TogglePrecanned &&
+    onC14AddCustomPill &&
+    onC14RemoveCustomPill &&
+    onC14CustomInputChange &&
+    onPartnerLifebloodDonorChange;
   const usesContextNotesBelowQuestion = showHazardousFlow || showSexualContactFlow;
 
   return (
@@ -757,80 +811,44 @@ function ScreeningDetailPanel({
       </div>
 
       {showSexualContactFlow && (
-        <>
-          <section className="mt-6">
-            <h2 className="text-base font-semibold text-[var(--clinical-on-surface)]">
-              Notes
-            </h2>
-            <textarea
-              value={notes}
-              onChange={(e) => onNotesChange(e.target.value)}
-              onKeyDown={(e) => {
-                if (
-                  e.key === "Enter" &&
-                  !e.shiftKey &&
-                  onSexualContactLookupFromNotes
-                ) {
-                  e.preventDefault();
-                  onSexualContactLookupFromNotes(e.currentTarget.value);
-                }
-              }}
-              placeholder="Record any additional observations or verbal clarifications..."
-              rows={4}
-              className="mt-3 w-full resize-none rounded-xl border border-[var(--clinical-outline)] bg-[var(--clinical-surface)] px-4 py-3 text-sm leading-6 outline-none placeholder:text-[#727783] focus:border-[var(--clinical-primary)] focus:bg-white focus:ring-2 focus:ring-[var(--clinical-primary)]/20"
-            />
-          </section>
-          <SexualContactGuidance
-            state={sexualContactGuidanceState}
-            activityNotes={notes}
-            onPartnerLifebloodDonorChange={
-              onPartnerLifebloodDonorChange ?? (() => {})
-            }
-          />
-        </>
+        <C14ScenarioSelection
+          selection={c14Scenario}
+          guidanceState={c14GuidanceState}
+          notes={notes}
+          readOnly={readOnly}
+          onTogglePrecanned={onC14TogglePrecanned}
+          onAddCustomPill={onC14AddCustomPill}
+          onRemoveCustomPill={onC14RemoveCustomPill}
+          onCustomInputChange={onC14CustomInputChange}
+          onNotesChange={onNotesChange}
+          onPartnerLifebloodDonorChange={
+            onPartnerLifebloodDonorChange ?? (() => {})
+          }
+        />
       )}
 
       {showFollowUps && !flow.hazardousActivity && !flow.sexualContactGuidance && (
-        <>
-          {!flow.c8MultiplePartnersGuidance && (
-            <div className="mt-6 flex gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
-              <InfoIcon className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" />
-              <div>
-                <p className="text-sm font-semibold text-blue-900">
-                  Why this is flagged
-                </p>
-                <p className="mt-1 text-sm leading-6 text-blue-800">
-                  {flow.flagReason}
-                </p>
-              </div>
-            </div>
-          )}
-
-          <section className={flow.c8MultiplePartnersGuidance ? "mt-6" : "mt-8"}>
-            <h2 className="text-base font-semibold text-[var(--clinical-on-surface)]">
-              Follow-up questions
-            </h2>
-            <div className="mt-4 flex flex-col gap-4">
-              {flow.followUps.map((followUp) => (
-                <FollowUpQuestionCard
-                  key={followUp.id}
-                  followUp={followUp}
-                  answer={
-                    followUpAnswers[followUp.id] ?? {
-                      pillId: null,
-                      custom: "",
-                    }
-                  }
-                  onSelectPill={(pillId) => onSelectPill(followUp.id, pillId)}
-                  onCustomChange={(custom) =>
-                    onCustomChange(followUp.id, custom)
-                  }
-                  readOnly={readOnly}
-                  interviewRole={interviewRole}
-                />
-              ))}
-            </div>
-          </section>
+        <div
+          className={`flex flex-col gap-4 ${flow.c8MultiplePartnersGuidance ? "mt-6" : "mt-8"}`}
+        >
+          {flow.followUps.map((followUp) => (
+            <FollowUpQuestionCard
+              key={followUp.id}
+              followUp={followUp}
+              answer={
+                followUpAnswers[followUp.id] ?? {
+                  pillId: null,
+                  custom: "",
+                }
+              }
+              onSelectPill={(pillId) => onSelectPill(followUp.id, pillId)}
+              onCustomChange={(custom) =>
+                onCustomChange(followUp.id, custom)
+              }
+              readOnly={readOnly}
+              interviewRole={interviewRole}
+            />
+          ))}
 
           {flow.c8MultiplePartnersGuidance && (
             <C8MultiplePartnersGuidance
@@ -839,7 +857,7 @@ function ScreeningDetailPanel({
               )}
             />
           )}
-        </>
+        </div>
       )}
 
       {!usesContextNotesBelowQuestion && (
@@ -973,74 +991,38 @@ function FollowUpQuestionCard({
   readOnly?: boolean;
   interviewRole: InterviewRole;
 }) {
-  const isComplete = Boolean(answer.pillId || answer.custom.trim());
   const followUpNotice = getFollowUpRoleNotice(interviewRole, followUp.escalation);
 
   return (
-    <article
-      className={`rounded-xl border-2 bg-white p-5 transition-colors ${
-        isComplete ? "border-emerald-300" : "border-[var(--clinical-outline)]"
-      }`}
-    >
-      <div className="flex items-start gap-3">
-        <span
-          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
-            isComplete ? "bg-emerald-100 text-emerald-600" : "bg-blue-100 text-blue-600"
-          }`}
-        >
-          <FollowUpIcon className="h-5 w-5" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-2">
-            <p className="text-sm font-semibold leading-snug text-[var(--clinical-on-surface)]">
-              {followUp.question}
-            </p>
-            <div className="flex shrink-0 items-center gap-2">
-              {isComplete && (
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-white">
-                  <CheckIcon className="h-3.5 w-3.5" />
-                </span>
-              )}
-            </div>
-          </div>
-          {followUpNotice && (
-            <p className="mt-2 text-xs font-medium text-amber-800">{followUpNotice}</p>
-          )}
+    <QuestionPanelCard title={followUp.question}>
+      {followUpNotice && (
+        <p className="mb-4 text-xs font-medium text-amber-800">{followUpNotice}</p>
+      )}
 
-          <div className="mt-4 flex flex-wrap gap-2">
-            {followUp.quickOptions.map((opt) => {
-              const selected = answer.pillId === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  aria-pressed={selected}
-                  disabled={readOnly}
-                  onClick={() => onSelectPill(selected ? null : opt.id)}
-                  className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
-                    selected
-                      ? "border-emerald-500 bg-emerald-50 text-emerald-800"
-                      : "border-[var(--clinical-outline)] bg-white text-[var(--clinical-on-surface)] hover:border-[#c2c6d4]"
-                  }`}
-                >
-                  {selected && <CheckIcon className="h-3.5 w-3.5 shrink-0" />}
-                  {opt.label}
-                </button>
-              );
-            })}
-          </div>
-
-          <textarea
-            value={answer.custom}
-            disabled={readOnly}
-            onChange={(e) => onCustomChange(e.target.value)}
-            placeholder="Or type a custom response..."
-            rows={2}
-            className="mt-3 w-full resize-none rounded-lg border border-[var(--clinical-outline)] bg-[var(--clinical-surface)] px-3 py-2.5 text-sm outline-none placeholder:text-[#727783] focus:border-[var(--clinical-primary)] focus:bg-white"
-          />
-        </div>
+      <div className="flex flex-wrap gap-2">
+        {followUp.quickOptions.map((opt) => {
+          const selected = answer.pillId === opt.id;
+          return (
+            <FollowUpOptionPill
+              key={opt.id}
+              label={opt.label}
+              selected={selected}
+              disabled={readOnly}
+              onClick={() => onSelectPill(selected ? null : opt.id)}
+            />
+          );
+        })}
       </div>
-    </article>
+
+      <textarea
+        value={answer.custom}
+        disabled={readOnly}
+        onChange={(e) => onCustomChange(e.target.value)}
+        placeholder="Or type a custom response..."
+        rows={2}
+        className="mt-3 w-full resize-none rounded-lg border border-[#e5e7eb] bg-[var(--clinical-surface)] px-3 py-2.5 text-sm outline-none placeholder:text-[#727783] focus:border-[var(--clinical-primary)] focus:bg-white"
+      />
+    </QuestionPanelCard>
   );
 }
 
@@ -1095,15 +1077,6 @@ function GearIcon({ className }: { className?: string }) {
   );
 }
 
-function InfoIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <circle cx="12" cy="12" r="10" />
-      <path d="M12 16v-4M12 8h.01" strokeLinecap="round" />
-    </svg>
-  );
-}
-
 function ThumbsUpIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -1116,15 +1089,6 @@ function ThumbsDownIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <path d="M17 14V2M17 14l4-4V4a2 2 0 00-2-2h-3.5a2 2 0 00-1.7.9l-1.3 2.6a4 4 0 00-2.2 2.2L7 14v8a2 2 0 002 2h6.5a2 2 0 001.7-.9L17 14" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function FollowUpIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M12 8v4M12 16h.01" strokeLinecap="round" />
     </svg>
   );
 }
