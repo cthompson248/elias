@@ -2,6 +2,7 @@
 
 import type { InterviewRole } from "./interview-role";
 import {
+  buildHazardousReadAloudText,
   getHazardousActivityById,
   type HazardousDonorDecision,
 } from "./hazardous-activities";
@@ -9,16 +10,19 @@ import {
 export interface HazardousActivityState {
   matchedId: string | null;
   lookupAttempted: boolean;
+  adviceReadToDonor: boolean;
   donorDecision: HazardousDonorDecision;
 }
 
 export function HazardousActivityGuidance({
   state,
   activityNotes,
+  onAdviceReadToDonorChange,
   onDonorDecision,
 }: {
   state: HazardousActivityState;
   activityNotes: string;
+  onAdviceReadToDonorChange: (value: boolean) => void;
   onDonorDecision: (decision: HazardousDonorDecision) => void;
   interviewRole: InterviewRole;
 }) {
@@ -40,26 +44,54 @@ export function HazardousActivityGuidance({
       )}
 
       {matched && (
-        <section className="rounded-xl border border-[#e5e7eb] bg-white p-4">
-          <p className="text-sm font-semibold text-[var(--clinical-on-surface)]">
-            Record the donor&apos;s decision
-          </p>
-          <p className="mt-1 text-sm text-[var(--clinical-on-surface-variant)]">
-            Read the guidance on the right, then record what they decide.
-          </p>
-          <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-            <DecisionButton
-              label="Donor continues with donation"
-              selected={state.donorDecision === "continue"}
-              onClick={() => onDonorDecision("continue")}
-            />
-            <DecisionButton
-              label="Donor elects not to donate"
-              selected={state.donorDecision === "defer"}
-              onClick={() => onDonorDecision("defer")}
-            />
-          </div>
-        </section>
+        <>
+          <section className="rounded-xl border border-[#e5e7eb] bg-white p-4">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--clinical-secondary)]">
+              Step 1 · Read to donor
+            </p>
+            <p className="mt-3 text-sm font-medium leading-6 text-[var(--clinical-on-surface)]">
+              &ldquo;{buildHazardousReadAloudText(matched)}&rdquo;
+            </p>
+            <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-lg border border-[#e5e7eb] bg-[var(--clinical-surface)] px-3 py-3">
+              <input
+                type="checkbox"
+                checked={state.adviceReadToDonor}
+                onChange={(e) => onAdviceReadToDonorChange(e.target.checked)}
+                className="mt-0.5 h-4 w-4 shrink-0 rounded border-[#c2c6d4] text-[var(--clinical-primary)]"
+              />
+              <span className="text-sm leading-snug text-[var(--clinical-on-surface)]">
+                I have read this advice to the donor
+              </span>
+            </label>
+          </section>
+
+          {state.adviceReadToDonor && (
+            <section className="rounded-xl border border-[#e5e7eb] bg-white p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--clinical-secondary)]">
+                Step 2 · Ask the donor
+              </p>
+              <p className="mt-3 text-sm font-medium leading-6 text-[var(--clinical-on-surface)]">
+                &ldquo;Would you like to continue with your donation today, or
+                would you prefer not to donate?&rdquo;
+              </p>
+              <p className="mt-2 text-xs text-[var(--clinical-on-surface-variant)]">
+                Record their answer:
+              </p>
+              <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                <DecisionButton
+                  label="Yes, continue with donation"
+                  selected={state.donorDecision === "continue"}
+                  onClick={() => onDonorDecision("continue")}
+                />
+                <DecisionButton
+                  label="No, prefer not to donate today"
+                  selected={state.donorDecision === "defer"}
+                  onClick={() => onDonorDecision("defer")}
+                />
+              </div>
+            </section>
+          )}
+        </>
       )}
     </div>
   );

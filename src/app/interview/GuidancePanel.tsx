@@ -22,10 +22,11 @@ export function GuidancePanel({
     (item) => item.status !== "incomplete"
   );
   const guidanceReady = sayToDonor !== null;
+  const showSayToDonor = guidanceReady && overallStatus !== "review";
 
   return (
     <>
-      {guidanceReady ? (
+      {showSayToDonor ? (
         <article className="rounded-xl border border-[var(--clinical-outline)] border-l-4 border-l-[var(--clinical-primary)] bg-white p-4">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--clinical-primary)]">
             Say to donor
@@ -35,7 +36,7 @@ export function GuidancePanel({
           </p>
           <StatusBadge status={overallStatus} pendingCount={pendingCount} />
         </article>
-      ) : (
+      ) : !guidanceReady ? (
         <article className="rounded-xl border border-amber-200 border-l-4 border-l-amber-500 bg-amber-50/60 p-4">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-900">
             Next step
@@ -50,7 +51,7 @@ export function GuidancePanel({
           )}
           <StatusBadge status={overallStatus} pendingCount={pendingCount} />
         </article>
-      )}
+      ) : null}
 
       {resolvedContributions.length > 0 && (
         <section className="mt-6">

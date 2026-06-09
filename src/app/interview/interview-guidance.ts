@@ -21,8 +21,8 @@ import {
   getSexualContactGuidanceById,
 } from "./sexual-contact-guidance";
 import {
+  buildHazardousOutcomeMessage,
   getHazardousActivityById,
-  hazardousActivitiesGeneralAdvice,
 } from "./hazardous-activities";
 import type { FollowUpCompleteVariant } from "./interview-panel-cards";
 
@@ -110,9 +110,11 @@ export function isQuestionFollowUpComplete(
   const followUps = input.followUpAnswers[flowKey] ?? {};
 
   if (flow.hazardousActivity) {
-    const { lookupAttempted, matchedId, donorDecision } = input.b5HazardousState;
+    const { lookupAttempted, matchedId, adviceReadToDonor, donorDecision } =
+      input.b5HazardousState;
     if (!lookupAttempted) return false;
     if (!matchedId) return lookupAttempted;
+    if (!adviceReadToDonor) return false;
     return donorDecision !== null;
   }
 
@@ -180,14 +182,22 @@ function buildB5Contribution(
     };
   }
 
-  const generalAdvice = hazardousActivitiesGeneralAdvice.readToDonor;
+  if (!state.adviceReadToDonor) {
+    return {
+      ...base,
+      status: "incomplete",
+      donorMessage: null,
+      reasoning: `Read the general advice to the donor for ${matched.label}, then confirm it has been read before recording their decision.`,
+      severity: "pending",
+    };
+  }
 
   if (state.donorDecision === null) {
     return {
       ...base,
       status: "incomplete",
       donorMessage: null,
-      reasoning: `Follow GSBD steps for ${matched.label}. Read general advice to the donor, then record their decision.`,
+      reasoning: `Record whether the donor continues with donation or elects not to donate after ${matched.label} advice.`,
       severity: "pending",
     };
   }
@@ -196,7 +206,7 @@ function buildB5Contribution(
     return {
       ...base,
       status: "complete",
-      donorMessage: `You've decided not to donate today because of your planned ${matched.label.toLowerCase()} — that's the safest choice. If you change your mind about donating, you'll need to wait the period set out in our guidelines before you can give blood again.`,
+      donorMessage: buildHazardousOutcomeMessage(matched, "defer"),
       reasoning: matched.ifNotDonate,
       deferralNote: `Apply deferral ${matched.deferralCode} per GSBD.`,
       severity: "defer",
@@ -206,7 +216,7 @@ function buildB5Contribution(
   return {
     ...base,
     status: "complete",
-    donorMessage: `${generalAdvice} For ${matched.label.toLowerCase()}, you should wait 24 hours after donating before doing this activity — and check any rules your employer requires.`,
+    donorMessage: buildHazardousOutcomeMessage(matched, "continue"),
     reasoning: matched.ifContinueDonation,
     deferralNote: "Nurse medical note required in NBMS before proceed.",
     severity: "review",

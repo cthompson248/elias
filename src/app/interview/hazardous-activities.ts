@@ -114,3 +114,20 @@ export function getHazardousActivityById(
 }
 
 export type HazardousDonorDecision = "continue" | "defer" | null;
+
+/** Text staff read aloud to the donor before recording their decision. */
+export function buildHazardousReadAloudText(entry: HazardousActivityEntry): string {
+  const general = hazardousActivitiesGeneralAdvice.readToDonor;
+  const activitySpecific = `For ${entry.label.toLowerCase()}, you should wait 24 hours after donating before doing this activity — and check any rules your employer requires.`;
+  return `${general} ${activitySpecific}`;
+}
+
+export function buildHazardousOutcomeMessage(
+  entry: HazardousActivityEntry,
+  decision: Exclude<HazardousDonorDecision, null>
+): string {
+  if (decision === "defer") {
+    return `You've decided not to donate today because of your planned ${entry.label.toLowerCase()} — that's the safest choice. If you change your mind about donating, you'll need to wait the period set out in our guidelines before you can give blood again.`;
+  }
+  return `You've chosen to continue with your donation — I just need to have a nurse review this with you before we can move forward.`;
+}

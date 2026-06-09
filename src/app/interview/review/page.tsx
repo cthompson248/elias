@@ -89,6 +89,7 @@ export default function InterviewReviewPage() {
   const [b5HazardousState, setB5HazardousState] = useState<HazardousActivityState>({
     matchedId: null,
     lookupAttempted: false,
+    adviceReadToDonor: false,
     donorDecision: null,
   });
   const [c14Scenario, setC14Scenario] = useState<C14ScenarioSelectionState>({
@@ -366,6 +367,7 @@ export default function InterviewReviewPage() {
                   setB5HazardousState({
                     matchedId: null,
                     lookupAttempted: false,
+                    adviceReadToDonor: false,
                     donorDecision: null,
                   });
                 }
@@ -378,9 +380,17 @@ export default function InterviewReviewPage() {
                 setB5HazardousState({
                   matchedId: match?.id ?? null,
                   lookupAttempted: true,
+                  adviceReadToDonor: false,
                   donorDecision: null,
                 });
               }}
+              onAdviceReadToDonorChange={(read) =>
+                setB5HazardousState((prev) => ({
+                  ...prev,
+                  adviceReadToDonor: read,
+                  donorDecision: read ? prev.donorDecision : null,
+                }))
+              }
               onHazardousDonorDecision={(decision) =>
                 setB5HazardousState((prev) => ({ ...prev, donorDecision: decision }))
               }
@@ -655,6 +665,7 @@ function ScreeningDetailPanel({
   onNotesChange,
   hazardousActivityState,
   onHazardousLookupFromNotes,
+  onAdviceReadToDonorChange,
   onHazardousDonorDecision,
   c14Scenario,
   c14GuidanceState,
@@ -678,6 +689,7 @@ function ScreeningDetailPanel({
   onNotesChange: (value: string) => void;
   hazardousActivityState?: HazardousActivityState;
   onHazardousLookupFromNotes?: (noteText: string) => void;
+  onAdviceReadToDonorChange?: (read: boolean) => void;
   onHazardousDonorDecision?: (
     decision: HazardousActivityState["donorDecision"]
   ) => void;
@@ -698,6 +710,7 @@ function ScreeningDetailPanel({
     donorResponse === "yes" &&
     hazardousActivityState &&
     onHazardousLookupFromNotes &&
+    onAdviceReadToDonorChange &&
     onHazardousDonorDecision;
   const showSexualContactFlow =
     flow.sexualContactGuidance &&
@@ -784,6 +797,7 @@ function ScreeningDetailPanel({
           interviewRole={interviewRole}
           state={hazardousActivityState}
           activityNotes={notes}
+          onAdviceReadToDonorChange={onAdviceReadToDonorChange}
           onDonorDecision={onHazardousDonorDecision}
         />
       )}
