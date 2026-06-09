@@ -76,21 +76,20 @@ export function HazardousActivityGuidance({
 
       {matched && (
         <>
-          <section className="rounded-xl border border-[var(--clinical-outline)] bg-white p-4">
+          <section className="rounded-xl border border-[var(--clinical-read-aloud-border)] bg-[var(--clinical-read-aloud)] p-4">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--clinical-secondary)]">
-              Step 1 · Read to donor
+              Medical advice
             </p>
             <p className="mt-3 text-sm font-medium leading-6 text-[var(--clinical-on-surface)]">
               &ldquo;{buildHazardousReadAloudText(matched)}&rdquo;
             </p>
-            <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-lg border border-[var(--clinical-outline)] bg-[var(--clinical-surface)] px-3 py-3">
+            <label className="clinical-read-aloud-confirm mt-4 flex cursor-pointer items-center gap-3 rounded-lg px-4 py-3.5">
               <input
                 type="checkbox"
                 checked={state.adviceReadToDonor}
                 onChange={(e) => onAdviceReadToDonorChange(e.target.checked)}
-                className="mt-0.5 h-4 w-4 shrink-0 rounded border-[var(--clinical-outline-variant)] text-[var(--clinical-primary)]"
               />
-              <span className="text-sm leading-snug text-[var(--clinical-on-surface)]">
+              <span className="text-sm font-medium leading-snug text-[var(--clinical-on-surface)]">
                 I have read this advice to the donor
               </span>
             </label>

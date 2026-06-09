@@ -484,6 +484,7 @@ export default function InterviewReviewPage() {
               <NextStepBanner
                 nursePrompt={aggregatedGuidance.nursePrompt}
                 pendingQuestionCodes={aggregatedGuidance.pendingQuestionCodes}
+                totalCount={aggregatedGuidance.contributions.length}
               />
             )}
 
@@ -492,7 +493,7 @@ export default function InterviewReviewPage() {
           <div className="min-h-0 flex-1 px-4 pb-6 pt-4">
             <GuidancePanel
               guidance={aggregatedGuidance}
-              referenceLinks={relevantReferenceGuidance}
+
             />
           </div>
         </aside>

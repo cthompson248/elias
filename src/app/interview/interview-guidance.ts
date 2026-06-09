@@ -160,7 +160,7 @@ function buildB5Contribution(
       status: "incomplete",
       donorMessage: null,
       reasoning:
-        "Select the planned hazardous activity or record it in interview notes and press Enter to load GSBD guidance.",
+        "Select the activity the donor is planning, or type it in the notes box and press Enter.",
       severity: "pending",
     };
   }
@@ -177,7 +177,7 @@ function buildB5Contribution(
         ? "I need to check with a colleague about your planned activity before we can confirm whether you can donate today."
         : null,
       reasoning:
-        "No matching GSBD hazardous activity entry for the note provided. Refine the note or consult GSBD.",
+        "Activity not recognised — try picking from the list above, or rephrase the note and press Enter.",
       severity: notes.trim() ? "review" : "pending",
     };
   }
@@ -187,7 +187,7 @@ function buildB5Contribution(
       ...base,
       status: "incomplete",
       donorMessage: null,
-      reasoning: `Read the general advice to the donor for ${matched.label}, then confirm it has been read before recording their decision.`,
+      reasoning: `Read the medical advice to the donor for ${matched.label}, then tick the confirmation box.`,
       severity: "pending",
     };
   }
@@ -197,7 +197,7 @@ function buildB5Contribution(
       ...base,
       status: "incomplete",
       donorMessage: null,
-      reasoning: `Record whether the donor continues with donation or elects not to donate after ${matched.label} advice.`,
+      reasoning: `Ask the donor if they still want to donate today after hearing the ${matched.label} advice, then record their answer.`,
       severity: "pending",
     };
   }
@@ -218,7 +218,7 @@ function buildB5Contribution(
     status: "complete",
     donorMessage: buildHazardousOutcomeMessage(matched, "continue"),
     reasoning: matched.ifContinueDonation,
-    deferralNote: "Nurse medical note required in NBMS before proceed.",
+      deferralNote: "Nurse must add a medical note in NBMS before the donor can proceed.",
     severity: "review",
   };
 }
@@ -243,7 +243,7 @@ function buildC8Contribution(
       status: "incomplete",
       donorMessage: null,
       reasoning:
-        "Confirm whether the donor has had anal sex in the last 3 months (C8a) before determining eligibility.",
+        "Answer C8a — this tells us whether a deferral applies.",
       severity: "pending",
     };
   }
@@ -304,7 +304,7 @@ function buildC14Contribution(
       status: "incomplete",
       donorMessage: null,
       reasoning:
-        "Select the scenario options that describe the donor's situation to determine the correct GSBD pathway.",
+        "Choose the options that best describe the donor's situation to work out the next step.",
       severity: "pending",
     };
   }
@@ -316,7 +316,7 @@ function buildC14Contribution(
       donorMessage:
         "I'm not completely sure how your answer fits our guidelines on this one — a nurse will help us work out the next step.",
       reasoning:
-        "The selected scenario could not be matched confidently to GSBD. A nurse should review before continuing.",
+        "The situation doesn't match a clear-cut pathway — a nurse should have a look before you continue.",
       severity: "review",
     };
   }
@@ -341,7 +341,7 @@ function buildC14Contribution(
       status: "incomplete",
       donorMessage: null,
       reasoning:
-        "Confirm whether the partner is a current Lifeblood donor — this determines whether the deferral applies.",
+        "Check whether the donor's partner is a current Lifeblood donor — this changes whether a deferral is needed.",
       severity: "pending",
     };
   }
@@ -411,7 +411,7 @@ function buildGenericContribution(
       donorMessage: null,
       reasoning:
         base.reasoning +
-        " Complete the follow-up questions for this item to determine eligibility.",
+        " Answer the follow-up questions above to find out if the donor can donate today.",
       severity: "pending",
     };
   }
@@ -499,7 +499,7 @@ function buildQuestionContribution(
       status: "complete",
       donorMessage:
         "We've noted your answer to this question — it doesn't change your eligibility on its own.",
-      reasoning: "No dedicated follow-up flow configured for this question.",
+      reasoning: "No additional questions needed for this item.",
       reference: "GSBD",
       severity: "clear",
     };
@@ -556,7 +556,7 @@ export function getFollowUpCompleteVariant(
 }
 
 function formatPlasmaRestrictionMessage(period: string): string {
-  return `Based on your responses, you're currently eligible to donate plasma, but we have a ${period} deferral on whole blood.`;
+  return `Based on your answers today, you can donate plasma — but there's a ${period} restriction on whole blood.`;
 }
 
 function pickStrictestDeferralPeriod(
@@ -588,14 +588,15 @@ function buildOutcomeFromComplete(
     return "Based on your answers today, none of the items we reviewed change your eligibility — you're clear to continue with your donation.";
   }
 
-  if (hasDefer && restricted.length === 0 && review.length === 0) {
+  // Defer always takes priority — if the donor isn't donating today, say so regardless of other items.
+  if (hasDefer) {
     return withMessages.find((item) => item.severity === "defer")!.donorMessage!;
   }
 
   if (restricted.length > 0) {
     const period = pickStrictestDeferralPeriod(restricted);
     if (review.length > 0) {
-      return `${formatPlasmaRestrictionMessage(period)} I just need to have a nurse review one of your answers with you before we can move forward.`;
+      return `${formatPlasmaRestrictionMessage(period)} A nurse also needs to check a couple of your answers and add a note to your file before you proceed.`;
     }
     if (restricted.length > 1) {
       return `${formatPlasmaRestrictionMessage(period)} Where more than one restriction applies, we'll follow the strictest one for your donation today.`;
@@ -605,7 +606,7 @@ function buildOutcomeFromComplete(
 
   if (review.length > 0) {
     if (review.length === 1) return review[0].donorMessage!;
-    return "We need a nurse to review some of your answers before we can confirm your eligibility today.";
+    return "A nurse needs to check a couple of your answers before we can confirm what you're able to donate today.";
   }
 
   return withMessages[0].donorMessage!;
@@ -638,7 +639,7 @@ function buildTopLevelGuidance(contributions: QuestionGuidanceContribution[]): {
     const codes = formatQuestionCodeList(pendingQuestionCodes);
     return {
       sayToDonor: null,
-      nursePrompt: `Complete the follow-up questions for ${codes} to see what to tell the donor.`,
+      nursePrompt: `Complete the follow-up questions for ${codes}.`,
       pendingQuestionCodes,
     };
   }

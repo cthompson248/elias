@@ -6,10 +6,16 @@ import type { ReferenceGuidanceItem } from "./data";
 export function NextStepBanner({
   nursePrompt,
   pendingQuestionCodes,
+  totalCount,
 }: {
   nursePrompt: string;
   pendingQuestionCodes: string[];
+  totalCount: number;
 }) {
+  const pendingCount = pendingQuestionCodes.length;
+  const doneCount = Math.max(0, totalCount - pendingCount);
+  const pct = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
+
   return (
     <section className="shrink-0 border-b border-[var(--clinical-primary-subtle-border)] bg-[var(--clinical-primary-container)] px-5 py-4">
       <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--clinical-primary-dark)]">
@@ -18,10 +24,23 @@ export function NextStepBanner({
       <p className="mt-2 text-sm font-medium leading-6 text-[var(--clinical-on-surface)]">
         {nursePrompt}
       </p>
-      {pendingQuestionCodes.length > 0 && (
-        <p className="mt-2 text-xs text-[var(--clinical-on-surface-variant)]">
-          Pending: {pendingQuestionCodes.join(", ")}
-        </p>
+      {totalCount > 0 && (
+        <div className="mt-3">
+          <div className="mb-1.5 flex items-center justify-between">
+            <span className="text-xs text-[var(--clinical-on-surface-variant)]">
+              {doneCount} of {totalCount} complete
+            </span>
+            <span className="text-xs font-semibold text-[var(--clinical-primary-dark)]">
+              {pct}%
+            </span>
+          </div>
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--clinical-primary-subtle-border)]">
+            <div
+              className="h-full rounded-full bg-[var(--clinical-primary-dark)] transition-all duration-300"
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+        </div>
       )}
     </section>
   );
@@ -69,10 +88,9 @@ export function EscalationBanner({
 
 export function GuidancePanel({
   guidance,
-  referenceLinks,
 }: {
   guidance: AggregatedInterviewGuidance;
-  referenceLinks: ReferenceGuidanceItem[];
+  referenceLinks?: ReferenceGuidanceItem[];
 }) {
   const {
     sayToDonor,
@@ -102,26 +120,28 @@ export function GuidancePanel({
 
       {resolvedContributions.length > 0 && (
         <section className="mt-6">
-          <h3 className="mb-2 text-sm font-medium text-[var(--clinical-on-surface-variant)]">Reasoning</h3>
-          <ul className="flex flex-col gap-2">
+          <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[var(--clinical-on-surface-variant)]">Reasoning</h3>
+          <ul className="flex flex-col gap-3">
             {resolvedContributions.map((item) => (
               <li key={item.questionId}>
-                <article className="rounded-lg border border-[var(--clinical-outline)] bg-white px-3 py-2.5">
-                  <p className="text-sm leading-snug text-[var(--clinical-on-surface-variant)]">
-                    <span className="font-semibold text-[var(--clinical-on-surface)]">
-                      {item.questionCode}
-                    </span>
-                    <span aria-hidden="true"> · </span>
+                <article className="rounded-xl border border-[var(--clinical-outline)] bg-white p-4 shadow-sm">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--clinical-primary)]">
+                    {item.questionCode}
+                  </p>
+                  <p className="mt-2 text-sm leading-relaxed text-[var(--clinical-on-surface)]">
                     {item.reasoning}
                   </p>
                   {item.deferralNote && item.status === "complete" && (
-                    <p className="mt-1.5 text-xs font-medium leading-snug text-teal-800">
+                    <p className="mt-3 rounded-lg border border-[var(--clinical-warning-subtle-border)] bg-[var(--clinical-warning-subtle)] px-3 py-2 text-xs font-medium leading-snug text-[var(--clinical-warning)]">
                       {item.deferralNote}
                     </p>
                   )}
-                  <p className="mt-1.5 text-xs leading-snug text-[var(--clinical-on-surface-variant)]">
-                    {item.reference}
-                  </p>
+                  {item.reference && (
+                    <span className="mt-3 inline-flex items-center gap-1.5 rounded-md border border-[var(--clinical-secondary)] px-2.5 py-1 text-xs font-medium text-[var(--clinical-secondary)] transition-colors hover:bg-[var(--clinical-secondary)] hover:text-white cursor-pointer">
+                      <ExternalLinkIcon className="h-3.5 w-3.5 shrink-0" />
+                      {item.reference}
+                    </span>
+                  )}
                 </article>
               </li>
             ))}
@@ -129,36 +149,6 @@ export function GuidancePanel({
         </section>
       )}
 
-      <section className="mt-6">
-        <h3 className="mb-3 text-sm font-medium text-[var(--clinical-on-surface-variant)]">
-          Reference guidance
-        </h3>
-        {referenceLinks.length > 0 ? (
-          <ul className="flex flex-col gap-2">
-            {referenceLinks.map((item) => (
-              <li key={item.id}>
-                <button
-                  type="button"
-                  className="group flex w-full items-center gap-3 rounded-lg border border-[var(--clinical-outline)] bg-white px-3 py-3 text-left transition-colors hover:border-[var(--clinical-outline-variant)] hover:bg-[var(--clinical-surface)]"
-                >
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center text-violet-600">
-                    <BookIcon className="h-5 w-5" />
-                  </span>
-                  <span className="min-w-0 flex-1 text-sm font-medium leading-snug text-[var(--clinical-on-surface)]">
-                    {item.label}
-                  </span>
-                  <ChevronRightIcon className="h-4 w-4 shrink-0 text-[var(--clinical-outline-variant)] transition-colors group-hover:text-[var(--clinical-on-surface-variant)]" />
-                </button>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="rounded-lg border border-dashed border-[var(--clinical-outline)] bg-white px-3 py-3 text-sm text-[var(--clinical-on-surface-variant)]">
-            GSBD guides appear here when the donor answers Yes to a question
-            that links to a reference section.
-          </p>
-        )}
-      </section>
     </>
   );
 }
@@ -200,7 +190,7 @@ function StatusBadge({
   );
 }
 
-function BookIcon({ className }: { className?: string }) {
+function ExternalLinkIcon({ className }: { className?: string }) {
   return (
     <svg
       className={className}
@@ -210,23 +200,9 @@ function BookIcon({ className }: { className?: string }) {
       strokeWidth="2"
       aria-hidden
     >
-      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-    </svg>
-  );
-}
-
-function ChevronRightIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      aria-hidden
-    >
-      <path d="m9 18 6-6-6-6" />
+      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+      <polyline points="15 3 21 3 21 9" />
+      <line x1="10" y1="14" x2="21" y2="3" />
     </svg>
   );
 }

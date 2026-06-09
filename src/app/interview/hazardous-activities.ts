@@ -45,9 +45,9 @@ export const hazardousActivities: HazardousActivityEntry[] = [
       "Ask the donor to check any employer-specific guidelines that they may be required to follow.",
     ],
     ifContinueDonation:
-      "Advise the donor of the actions in the Pilot / Air crew entry, read the general advice, and advise on waiting periods. If the donor elects to continue donation, document in NBMS medical notes that you provided advice. A nurse must record the medical note before the donor proceeds.",
+      "Donor wants to continue. A nurse must add a medical note in NBMS before they proceed — remind them to wait 24 hours before flying and to check any employer rules.",
     ifNotDonate:
-      "If the donor elects not to donate, assign deferral code T230 for the time period specified in GSBD.",
+      "Donor has chosen not to donate today. Apply deferral T230 for the period shown in GSBD.",
     deferralCode: "T230",
     medicalNoteExample:
       "Donor is a pilot; general advice given as per the GSBD. Donor would like to proceed.",
@@ -62,9 +62,9 @@ export const hazardousActivities: HazardousActivityEntry[] = [
       "Tell the donor to wait 24 hours before undertaking this activity.",
     ],
     ifContinueDonation:
-      "If the donor elects to continue donation, document in NBMS medical notes that you provided advice. A nurse must record the medical note.",
+      "Donor wants to continue. A nurse must add a medical note in NBMS — remind them to wait 24 hours before diving.",
     ifNotDonate:
-      "If the donor elects not to donate, assign deferral code T230 for the time period specified in GSBD.",
+      "Donor has chosen not to donate today. Apply deferral T230 for the period shown in GSBD.",
     deferralCode: "T230",
     medicalNoteExample:
       "Donor intends underwater diving; general advice given as per GSBD. Donor would like to proceed.",
@@ -87,9 +87,9 @@ export const hazardousActivities: HazardousActivityEntry[] = [
       "Ask the donor to check any employer-specific guidelines that they may be required to follow.",
     ],
     ifContinueDonation:
-      "If the donor elects to continue donation, document in NBMS medical notes that you provided advice. A nurse must record the medical note before the donor proceeds.",
+      "Donor wants to continue. A nurse must add a medical note in NBMS — remind them to wait 24 hours before driving passengers and to check any employer rules.",
     ifNotDonate:
-      "If the donor elects not to donate, assign deferral code T230 for the time period specified in GSBD.",
+      "Donor has chosen not to donate today. Apply deferral T230 for the period shown in GSBD.",
     deferralCode: "T230",
     medicalNoteExample:
       "Donor drives public transport; general advice given as per GSBD. Donor would like to proceed.",
@@ -104,9 +104,9 @@ export const hazardousActivities: HazardousActivityEntry[] = [
       "Tell the donor to wait 24 hours before undertaking this activity.",
     ],
     ifContinueDonation:
-      "If the donor elects to continue donation, document in NBMS medical notes that you provided advice. A nurse must record the medical note.",
+      "Donor wants to continue. A nurse must add a medical note in NBMS — remind them to wait 24 hours before using heavy machinery.",
     ifNotDonate:
-      "If the donor elects not to donate, assign deferral code T230 for the time period specified in GSBD.",
+      "Donor has chosen not to donate today. Apply deferral T230 for the period shown in GSBD.",
     deferralCode: "T230",
     medicalNoteExample:
       "Donor operates heavy machinery; general advice given as per GSBD. Donor would like to proceed.",
