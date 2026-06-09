@@ -67,15 +67,8 @@ export function HazardousActivityGuidance({
 
           {state.adviceReadToDonor && (
             <section className="rounded-xl border border-[#e5e7eb] bg-white p-4">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--clinical-secondary)]">
-                Step 2 · Ask the donor
-              </p>
-              <p className="mt-3 text-sm font-medium leading-6 text-[var(--clinical-on-surface)]">
-                &ldquo;Would you like to continue with your donation today, or
-                would you prefer not to donate?&rdquo;
-              </p>
-              <p className="mt-2 text-xs text-[var(--clinical-on-surface-variant)]">
-                Record their answer:
+              <p className="text-sm font-medium leading-6 text-[var(--clinical-on-surface)]">
+                Would you like to continue with your donation today?
               </p>
               <div className="mt-3 flex flex-col gap-2 sm:flex-row">
                 <DecisionButton

@@ -28,9 +28,18 @@ export interface RoleEscalationNotice {
 
 export function getRoleEscalationNotice(
   role: InterviewRole,
-  level: EscalationLevel
+  level: EscalationLevel,
+  context?: { b5DonorContinues?: boolean }
 ): RoleEscalationNotice | null {
   if (!needsNurseHighlight(level)) return null;
+
+  if (context?.b5DonorContinues && level === "consult_nurse") {
+    return {
+      title: "Nurse consult required",
+      body: "Donor has elected to continue donation. A nurse must record the medical note before the donor proceeds.",
+      tone: "amber",
+    };
+  }
 
   if (role === "nurse") {
     if (level === "nurse_takeover") {

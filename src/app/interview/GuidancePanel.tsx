@@ -3,6 +3,70 @@
 import type { AggregatedInterviewGuidance } from "./interview-guidance";
 import type { ReferenceGuidanceItem } from "./data";
 
+export function NextStepBanner({
+  nursePrompt,
+  pendingQuestionCodes,
+}: {
+  nursePrompt: string;
+  pendingQuestionCodes: string[];
+}) {
+  return (
+    <section className="shrink-0 border-b border-blue-200/80 bg-[#eef4fb] px-5 py-4">
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-blue-900/75">
+        Next step
+      </p>
+      <p className="mt-2 text-sm font-medium leading-6 text-blue-950">
+        {nursePrompt}
+      </p>
+      {pendingQuestionCodes.length > 0 && (
+        <p className="mt-2 text-xs text-blue-900/65">
+          Pending: {pendingQuestionCodes.join(", ")}
+        </p>
+      )}
+    </section>
+  );
+}
+
+export function EscalationBanner({
+  notice,
+}: {
+  notice: { title: string; body: string; tone: "amber" | "rose" | "blue" };
+}) {
+  const palette = {
+    amber: {
+      wrap: "border-b border-amber-200/80 bg-[#f7f0e4]",
+      label: "text-amber-900/80",
+      body: "text-amber-950",
+    },
+    rose: {
+      wrap: "border-b border-rose-200/80 bg-[#fceef0]",
+      label: "text-rose-900/75",
+      body: "text-rose-950",
+    },
+    blue: {
+      wrap: "border-b border-amber-200/80 bg-[#f7f0e4]",
+      label: "text-amber-900/80",
+      body: "text-amber-950",
+    },
+  }[notice.tone];
+
+  return (
+    <section
+      className={`shrink-0 px-5 py-4 ${palette.wrap}`}
+      role="status"
+    >
+      <p
+        className={`text-[11px] font-semibold uppercase tracking-wider ${palette.label}`}
+      >
+        {notice.title}
+      </p>
+      <p className={`mt-2 text-sm font-medium leading-6 ${palette.body}`}>
+        {notice.body}
+      </p>
+    </section>
+  );
+}
+
 export function GuidancePanel({
   guidance,
   referenceLinks,
@@ -12,11 +76,9 @@ export function GuidancePanel({
 }) {
   const {
     sayToDonor,
-    nursePrompt,
     contributions,
     overallStatus,
     pendingCount,
-    pendingQuestionCodes,
   } = guidance;
   const resolvedContributions = contributions.filter(
     (item) => item.status !== "incomplete"
@@ -36,26 +98,11 @@ export function GuidancePanel({
           </p>
           <StatusBadge status={overallStatus} pendingCount={pendingCount} />
         </article>
-      ) : !guidanceReady ? (
-        <article className="rounded-xl border border-amber-200 border-l-4 border-l-amber-500 bg-amber-50/60 p-4">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-900">
-            Next step
-          </p>
-          <p className="mt-3 text-sm font-medium leading-6 text-amber-950">
-            {nursePrompt}
-          </p>
-          {pendingQuestionCodes.length > 0 && (
-            <p className="mt-3 text-xs text-amber-900/80">
-              Pending: {pendingQuestionCodes.join(", ")}
-            </p>
-          )}
-          <StatusBadge status={overallStatus} pendingCount={pendingCount} />
-        </article>
       ) : null}
 
       {resolvedContributions.length > 0 && (
         <section className="mt-6">
-          <h3 className="mb-2 text-sm font-medium text-[#727783]">Why</h3>
+          <h3 className="mb-2 text-sm font-medium text-[#727783]">Reasoning</h3>
           <ul className="flex flex-col gap-2">
             {resolvedContributions.map((item) => (
               <li key={item.questionId}>

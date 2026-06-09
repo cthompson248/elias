@@ -17,7 +17,7 @@ import {
   type QuestionReviewStatus,
   type ScreeningQuestionFlow,
 } from "../data";
-import { GuidancePanel } from "../GuidancePanel";
+import { EscalationBanner, GuidancePanel, NextStepBanner } from "../GuidancePanel";
 import {
   buildAggregatedInterviewGuidance,
   getFollowUpCompleteVariant,
@@ -53,7 +53,6 @@ import {
   getRoleEscalationNotice,
   loadInterviewRole,
   type InterviewRole,
-  type RoleEscalationNotice,
 } from "../interview-role";
 
 type FollowUpAnswer = { pillId: string | null; custom: string };
@@ -201,7 +200,10 @@ export default function InterviewReviewPage() {
     effectiveEscalation = "consult_nurse";
   }
 
-  const roleNotice = getRoleEscalationNotice(interviewRole, effectiveEscalation);
+  const roleNotice = getRoleEscalationNotice(interviewRole, effectiveEscalation, {
+    b5DonorContinues:
+      activeFlowKey === "b5" && b5HazardousState.donorDecision === "continue",
+  });
   const canEdit = canRoleEdit(interviewRole, effectiveEscalation);
 
   function setQuestionResponse(
@@ -458,19 +460,23 @@ export default function InterviewReviewPage() {
 
         {/* Right: clinical insights */}
         <aside className="col-span-1 flex min-h-0 min-w-0 flex-col overflow-y-auto border-l border-[var(--clinical-outline)] bg-[var(--clinical-surface-insights)]">
-          <div className="px-5 py-4">
+          <div className="shrink-0 px-5 py-4">
             <h2 className="font-[family-name:var(--font-public-sans)] text-sm font-semibold">
               Guidance
             </h2>
           </div>
 
-          <div className="px-4 pb-6">
-            {roleNotice && (
-              <div className="mb-4 px-1">
-                <RoleEscalationNotice notice={roleNotice} />
-              </div>
+          {aggregatedGuidance.sayToDonor === null &&
+            aggregatedGuidance.nursePrompt && (
+              <NextStepBanner
+                nursePrompt={aggregatedGuidance.nursePrompt}
+                pendingQuestionCodes={aggregatedGuidance.pendingQuestionCodes}
+              />
             )}
 
+          {roleNotice && <EscalationBanner notice={roleNotice} />}
+
+          <div className="min-h-0 flex-1 px-4 pb-6 pt-4">
             <GuidancePanel
               guidance={aggregatedGuidance}
               referenceLinks={relevantReferenceGuidance}
@@ -809,24 +815,6 @@ function ScreeningDetailPanel({
       {donorResponse === "yes" && followUpComplete && (
         <FollowUpCompleteCard variant={followUpCompleteVariant} />
       )}
-    </div>
-  );
-}
-
-function RoleEscalationNotice({ notice }: { notice: RoleEscalationNotice }) {
-  const styles = {
-    amber: "border-amber-200 bg-amber-50 text-amber-900",
-    rose: "border-rose-200 bg-rose-50 text-rose-900",
-    blue: "border-blue-200 bg-blue-50 text-blue-900",
-  };
-
-  return (
-    <div
-      className={`rounded-xl border px-4 py-3 text-sm leading-6 ${styles[notice.tone]}`}
-      role="status"
-    >
-      <p className="font-semibold">{notice.title}</p>
-      <p className="mt-1">{notice.body}</p>
     </div>
   );
 }
