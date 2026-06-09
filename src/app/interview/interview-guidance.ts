@@ -160,7 +160,7 @@ function buildB5Contribution(
       status: "incomplete",
       donorMessage: null,
       reasoning:
-        "Record the planned hazardous activity in interview notes and press Enter to load GSBD guidance.",
+        "Select the planned hazardous activity or record it in interview notes and press Enter to load GSBD guidance.",
       severity: "pending",
     };
   }

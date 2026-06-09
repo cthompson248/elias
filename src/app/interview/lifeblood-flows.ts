@@ -476,7 +476,7 @@ export const lifebloodClinicalInsights: Record<
   },
   b5: {
     title: "Flagged: B5 Hazardous activity",
-    body: "Add notes for this interview and press Enter to load GSBD guidance when a hazardous activity is recorded.",
+    body: "Select a hazardous activity or add interview notes and press Enter to load GSBD guidance.",
     reference:
       "GSBD — Hazardous occupational/recreational activities · WI-00037 2B",
   },

@@ -70,6 +70,31 @@ export const hazardousActivities: HazardousActivityEntry[] = [
       "Donor intends underwater diving; general advice given as per GSBD. Donor would like to proceed.",
   },
   {
+    id: "public-transport",
+    label: "Driving public transport",
+    keywords: [
+      "public transport",
+      "bus",
+      "train",
+      "tram",
+      "coach",
+      "driving passengers",
+    ],
+    donationTypes: "All donation types",
+    steps: [
+      "Follow the actions in the General advice entry.",
+      "Tell the donor to wait 24 hours before undertaking this activity.",
+      "Ask the donor to check any employer-specific guidelines that they may be required to follow.",
+    ],
+    ifContinueDonation:
+      "If the donor elects to continue donation, document in NBMS medical notes that you provided advice. A nurse must record the medical note before the donor proceeds.",
+    ifNotDonate:
+      "If the donor elects not to donate, assign deferral code T230 for the time period specified in GSBD.",
+    deferralCode: "T230",
+    medicalNoteExample:
+      "Donor drives public transport; general advice given as per GSBD. Donor would like to proceed.",
+  },
+  {
     id: "machinery",
     label: "Operating heavy machinery",
     keywords: ["machinery", "heavy machinery", "crane", "forklift"],

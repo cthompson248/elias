@@ -4,14 +4,45 @@ import type { InterviewRole } from "./interview-role";
 import {
   buildHazardousReadAloudText,
   getHazardousActivityById,
+  hazardousActivities,
   type HazardousDonorDecision,
 } from "./hazardous-activities";
+import { FollowUpOptionPill, QuestionPanelCard } from "./interview-panel-cards";
 
 export interface HazardousActivityState {
   matchedId: string | null;
   lookupAttempted: boolean;
   adviceReadToDonor: boolean;
   donorDecision: HazardousDonorDecision;
+}
+
+export function B5ActivitySelection({
+  selectedId,
+  readOnly,
+  onSelectActivity,
+}: {
+  selectedId: string | null;
+  readOnly?: boolean;
+  onSelectActivity: (activityId: string) => void;
+}) {
+  return (
+    <QuestionPanelCard
+      title="Which hazardous activity is planned?"
+      hint="Select the activity the donor intends within the next 3 days."
+    >
+      <div className="flex flex-wrap gap-2">
+        {hazardousActivities.map((activity) => (
+          <FollowUpOptionPill
+            key={activity.id}
+            label={activity.label}
+            selected={selectedId === activity.id}
+            disabled={readOnly}
+            onClick={() => onSelectActivity(activity.id)}
+          />
+        ))}
+      </div>
+    </QuestionPanelCard>
+  );
 }
 
 export function HazardousActivityGuidance({
@@ -128,7 +159,7 @@ export function buildB5ClinicalInsight(
   if (!matched) {
     return {
       title: "Flagged: B5 Hazardous activity",
-      body: "Donor answered Yes. Add interview notes and press Enter to load GSBD guidance when the note describes a hazardous activity.",
+      body: "Donor answered Yes. Select a hazardous activity below or add interview notes and press Enter to load GSBD guidance.",
       reference:
         "GSBD — Hazardous occupational/recreational activities · WI-00037 2B",
     };

@@ -126,7 +126,7 @@ export function FollowUpOptionPill({
       onClick={onClick}
       className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
         selected
-          ? "border-[var(--clinical-success)] bg-[#f3faef] text-[var(--clinical-success)]"
+          ? "clinical-toggle-yes-selected"
           : "border-[var(--clinical-outline)] bg-white text-[var(--clinical-on-surface)] hover:border-[var(--clinical-outline-variant)]"
       }`}
     >

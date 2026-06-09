@@ -25,10 +25,14 @@ import {
   isQuestionFollowUpComplete,
 } from "../interview-guidance";
 import {
+  B5ActivitySelection,
   HazardousActivityGuidance,
   type HazardousActivityState,
 } from "../HazardousActivityGuidance";
-import { lookupHazardousActivity } from "../hazardous-activities";
+import {
+  getHazardousActivityById,
+  lookupHazardousActivity,
+} from "../hazardous-activities";
 import {
   FollowUpOptionPill,
   FollowUpCompleteCard,
@@ -386,6 +390,21 @@ export default function InterviewReviewPage() {
                   donorDecision: null,
                 });
               }}
+              onSelectB5Activity={(activityId) => {
+                const entry = getHazardousActivityById(activityId);
+                if (!entry) return;
+                const deselect = b5HazardousState.matchedId === activityId;
+                setNotesByQuestion((prev) => ({
+                  ...prev,
+                  [activeItemId]: deselect ? "" : entry.label,
+                }));
+                setB5HazardousState({
+                  matchedId: deselect ? null : activityId,
+                  lookupAttempted: !deselect,
+                  adviceReadToDonor: false,
+                  donorDecision: null,
+                });
+              }}
               onAdviceReadToDonorChange={(read) =>
                 setB5HazardousState((prev) => ({
                   ...prev,
@@ -460,12 +479,6 @@ export default function InterviewReviewPage() {
 
         {/* Right: clinical insights */}
         <aside className="col-span-1 flex min-h-0 min-w-0 flex-col overflow-y-auto border-l border-[var(--clinical-outline)] bg-[var(--clinical-surface-insights)]">
-          <div className="shrink-0 px-5 py-4">
-            <h2 className="font-[family-name:var(--font-public-sans)] text-sm font-semibold">
-              Guidance
-            </h2>
-          </div>
-
           {aggregatedGuidance.sayToDonor === null &&
             aggregatedGuidance.nursePrompt && (
               <NextStepBanner
@@ -675,6 +688,7 @@ function ScreeningDetailPanel({
   onNotesChange,
   hazardousActivityState,
   onHazardousLookupFromNotes,
+  onSelectB5Activity,
   onAdviceReadToDonorChange,
   onHazardousDonorDecision,
   c14Scenario,
@@ -699,6 +713,7 @@ function ScreeningDetailPanel({
   onNotesChange: (value: string) => void;
   hazardousActivityState?: HazardousActivityState;
   onHazardousLookupFromNotes?: (noteText: string) => void;
+  onSelectB5Activity?: (activityId: string) => void;
   onAdviceReadToDonorChange?: (read: boolean) => void;
   onHazardousDonorDecision?: (
     decision: HazardousActivityState["donorDecision"]
@@ -720,6 +735,7 @@ function ScreeningDetailPanel({
     donorResponse === "yes" &&
     hazardousActivityState &&
     onHazardousLookupFromNotes &&
+    onSelectB5Activity &&
     onAdviceReadToDonorChange &&
     onHazardousDonorDecision;
   const showSexualContactFlow =
@@ -803,13 +819,22 @@ function ScreeningDetailPanel({
       )}
 
       {showHazardousFlow && (
-        <HazardousActivityGuidance
-          interviewRole={interviewRole}
-          state={hazardousActivityState}
-          activityNotes={notes}
-          onAdviceReadToDonorChange={onAdviceReadToDonorChange}
-          onDonorDecision={onHazardousDonorDecision}
-        />
+        <>
+          <div className="mt-6">
+            <B5ActivitySelection
+              selectedId={hazardousActivityState.matchedId}
+              readOnly={readOnly}
+              onSelectActivity={onSelectB5Activity}
+            />
+          </div>
+          <HazardousActivityGuidance
+            interviewRole={interviewRole}
+            state={hazardousActivityState}
+            activityNotes={notes}
+            onAdviceReadToDonorChange={onAdviceReadToDonorChange}
+            onDonorDecision={onHazardousDonorDecision}
+          />
+        </>
       )}
 
       {donorResponse === "no" && (
