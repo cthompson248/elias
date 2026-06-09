@@ -145,8 +145,10 @@ export type FollowUpCompleteVariant =
 
 export function FollowUpCompleteCard({
   variant = "complete",
+  note,
 }: {
   variant?: FollowUpCompleteVariant;
+  note?: string;
 }) {
   const config = {
     cleared: {
@@ -201,23 +203,35 @@ export function FollowUpCompleteCard({
 
   return (
     <article
-      className={`mt-6 flex gap-3 rounded-xl border px-4 py-4 ${config.articleClass}`}
+      className={`mt-6 rounded-xl border p-5 ${config.articleClass}`}
     >
-      <span
-        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white ${config.iconClass}`}
-      >
-        {config.icon === "check" ? (
-          <CheckIcon className="h-5 w-5" />
-        ) : (
-          <AlertIcon className="h-5 w-5" />
-        )}
-      </span>
-      <div>
-        <p className={`font-semibold ${config.titleClass}`}>{config.title}</p>
-        <p className={`mt-1 text-sm leading-6 ${config.bodyClass}`}>
-          {config.body}
+      <div className="flex items-center gap-3">
+        <span
+          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white ${config.iconClass}`}
+        >
+          {config.icon === "check" ? (
+            <CheckIcon className="h-5 w-5" />
+          ) : (
+            <AlertIcon className="h-5 w-5" />
+          )}
+        </span>
+        <p className={`text-base font-semibold ${config.titleClass}`}>
+          {config.title}
         </p>
       </div>
+      <p className={`mt-3 text-sm leading-relaxed ${config.bodyClass}`}>
+        {config.body}
+      </p>
+      {note && (
+        <div className="mt-4 flex items-start gap-2 rounded-lg border border-[var(--clinical-warning-subtle-border)] bg-white/70 px-3 py-2.5">
+          <span className="mt-px text-[var(--clinical-warning)]">
+            <AlertIcon className="h-4 w-4 shrink-0" />
+          </span>
+          <p className="text-xs font-medium leading-relaxed text-[var(--clinical-warning)]">
+            {note}
+          </p>
+        </div>
+      )}
     </article>
   );
 }

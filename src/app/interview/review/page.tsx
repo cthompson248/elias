@@ -173,12 +173,14 @@ export default function InterviewReviewPage() {
       })
     : false;
 
-  const activeFollowUpCompleteVariant =
+  const activeContribution =
     activeQuestion && donorResponse === "yes"
-      ? getFollowUpCompleteVariant(
-          getQuestionGuidanceContribution(activeQuestion, guidanceInput)
-        )
-      : "complete";
+      ? getQuestionGuidanceContribution(activeQuestion, guidanceInput)
+      : null;
+  const activeFollowUpCompleteVariant = activeContribution
+    ? getFollowUpCompleteVariant(activeContribution)
+    : "complete";
+  const activeFollowUpDeferralNote = activeContribution?.deferralNote ?? undefined;
 
   let effectiveEscalation: EscalationLevel = activeQuestion
     ? resolveInterviewEscalation(
@@ -460,6 +462,7 @@ export default function InterviewReviewPage() {
               onPartnerLifebloodDonorChange={setC14PartnerDonor}
               followUpComplete={activeFollowUpComplete}
               followUpCompleteVariant={activeFollowUpCompleteVariant}
+              followUpDeferralNote={activeFollowUpDeferralNote}
             />
           ) : activeQuestion ? (
             <div className="flex flex-1 flex-col overflow-y-auto bg-white px-8 py-8">
@@ -701,6 +704,7 @@ function ScreeningDetailPanel({
   onPartnerLifebloodDonorChange,
   followUpComplete,
   followUpCompleteVariant,
+  followUpDeferralNote,
 }: {
   flow: ScreeningQuestionFlow;
   questionCode?: string;
@@ -728,6 +732,7 @@ function ScreeningDetailPanel({
   onPartnerLifebloodDonorChange?: (value: boolean) => void;
   followUpComplete: boolean;
   followUpCompleteVariant: FollowUpCompleteVariant;
+  followUpDeferralNote?: string;
 }) {
   const followUpTrigger = flow.followUpTrigger ?? flow.donorResponse;
   const showFollowUps = donorResponse === followUpTrigger;
@@ -843,7 +848,10 @@ function ScreeningDetailPanel({
       )}
 
       {donorResponse === "yes" && followUpComplete && (
-        <FollowUpCompleteCard variant={followUpCompleteVariant} />
+        <FollowUpCompleteCard
+          variant={followUpCompleteVariant}
+          note={followUpDeferralNote}
+        />
       )}
     </div>
   );
