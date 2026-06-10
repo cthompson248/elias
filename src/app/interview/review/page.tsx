@@ -15,7 +15,7 @@ import {
   type QuestionReviewStatus,
   type ScreeningQuestionFlow,
 } from "../data";
-import { EscalationBanner, GuidancePanel, NextStepBanner } from "../GuidancePanel";
+import { GuidancePanel, NextStepBanner } from "../GuidancePanel";
 import {
   buildAggregatedInterviewGuidance,
   getFollowUpCompleteVariant,
@@ -54,7 +54,12 @@ import {
   getCountryByCode,
   CHAGAS_GUIDANCE,
 } from "../country-of-birth";
-import { resolveInterviewEscalation, type EscalationLevel } from "../escalation";
+import {
+  maxEscalation,
+  needsNurseHighlight,
+  resolveInterviewEscalation,
+  type EscalationLevel,
+} from "../escalation";
 import { InterviewHeader } from "../InterviewHeader";
 import {
   canRoleEdit,
@@ -154,6 +159,34 @@ export default function InterviewReviewPage() {
     [guidanceInput]
   );
 
+  const nextStepState = useMemo(
+    () =>
+      buildInterviewNextStep({
+        countryOfBirth,
+        reviewQueue,
+        questionResponses,
+        followUpAnswers,
+        b5HazardousState,
+        c14Scenario,
+        c14PartnerDonor,
+        notesByQuestion,
+        interviewRole,
+        overallStatus: aggregatedGuidance.overallStatus,
+      }),
+    [
+      countryOfBirth,
+      reviewQueue,
+      questionResponses,
+      followUpAnswers,
+      b5HazardousState,
+      c14Scenario,
+      c14PartnerDonor,
+      notesByQuestion,
+      interviewRole,
+      aggregatedGuidance.overallStatus,
+    ]
+  );
+
   const checklistCounts = getChecklistCounts(allQuestions, reviewQueueIds);
   const filteredQuestions = filterChecklistQuestions(
     allQuestions,
@@ -220,10 +253,6 @@ export default function InterviewReviewPage() {
   const selectedCountry = countryOfBirth ? getCountryByCode(countryOfBirth) : null;
   const chagasRisk = selectedCountry?.chagasRisk ?? false;
 
-  const roleNotice = getRoleEscalationNotice(interviewRole, effectiveEscalation, {
-    b5DonorContinues:
-      activeFlowKey === "b5" && b5HazardousState.donorDecision === "continue",
-  });
   const canEdit = canRoleEdit(interviewRole, effectiveEscalation);
 
   function setQuestionResponse(
@@ -260,7 +289,7 @@ export default function InterviewReviewPage() {
       {/* Three-column body: sidebars 1/4 each, main 1/2 */}
       <div className="grid min-h-0 flex-1 grid-cols-4">
         {/* Left: checklist */}
-        <aside className="col-span-1 flex min-h-0 min-w-0 flex-col overflow-hidden border-r border-[var(--clinical-outline)] bg-[var(--clinical-surface)]">
+        <aside className="col-span-1 flex min-h-0 min-w-0 flex-col overflow-hidden border-r border-[var(--clinical-outline)] bg-[#FAFBFC]">
           <div className="shrink-0 p-3">
             <ChecklistFilterBar
               filter={checklistFilter}
@@ -436,17 +465,12 @@ export default function InterviewReviewPage() {
         </main>
 
         {/* Right: clinical insights */}
-        <aside className="col-span-1 flex min-h-0 min-w-0 flex-col overflow-y-auto border-l border-[var(--clinical-outline)] bg-[var(--clinical-surface-insights)]">
-          {aggregatedGuidance.sayToDonor === null &&
-            aggregatedGuidance.nursePrompt && (
-              <NextStepBanner
-                nursePrompt={aggregatedGuidance.nursePrompt}
-                pendingQuestionCodes={aggregatedGuidance.pendingQuestionCodes}
-                totalCount={aggregatedGuidance.contributions.length}
-              />
-            )}
-
-          {roleNotice && <EscalationBanner notice={roleNotice} />}
+        <aside className="col-span-1 flex min-h-0 min-w-0 flex-col overflow-y-auto border-l border-[var(--clinical-outline)] bg-[#F5F6F8]">
+          <NextStepBanner
+            prompt={nextStepState.prompt}
+            doneCount={nextStepState.doneCount}
+            totalCount={nextStepState.totalCount}
+          />
 
           <div className="min-h-0 flex-1 px-4 pb-6 pt-4">
             {chagasRisk && (
@@ -462,6 +486,141 @@ export default function InterviewReviewPage() {
       </div>
     </div>
   );
+}
+
+function formatQuestionCodeList(codes: string[]): string {
+  if (codes.length === 1) return codes[0];
+  if (codes.length === 2) return `${codes[0]} and ${codes[1]}`;
+  return `${codes.slice(0, -1).join(", ")}, and ${codes[codes.length - 1]}`;
+}
+
+function buildInterviewNextStep({
+  countryOfBirth,
+  reviewQueue,
+  questionResponses,
+  followUpAnswers,
+  b5HazardousState,
+  c14Scenario,
+  c14PartnerDonor,
+  notesByQuestion,
+  interviewRole,
+  overallStatus,
+}: {
+  countryOfBirth: string | null;
+  reviewQueue: InterviewQuestion[];
+  questionResponses: Record<string, DonorScreeningResponse | null>;
+  followUpAnswers: Record<string, Record<string, FollowUpAnswer>>;
+  b5HazardousState: HazardousActivityState;
+  c14Scenario: C14ScenarioSelectionState;
+  c14PartnerDonor: boolean | null;
+  notesByQuestion: Record<string, string>;
+  interviewRole: InterviewRole;
+  overallStatus: "eligible" | "restricted" | "deferred" | "pending" | "review";
+}): {
+  prompt: string;
+  doneCount: number;
+  totalCount: number;
+} {
+  const followUpInput = {
+    followUpAnswers,
+    b5HazardousState,
+    c14Scenario,
+    c14PartnerDonor,
+    notesByQuestion,
+  };
+
+  const countryComplete = countryOfBirth !== null;
+  const queueItems = reviewQueue.map((question) => ({
+    question,
+    complete: isQuestionFollowUpComplete(
+      question,
+      questionResponses[question.id] ?? null,
+      followUpInput
+    ),
+  }));
+
+  const totalCount = 1 + reviewQueue.length;
+  const doneCount =
+    (countryComplete ? 1 : 0) + queueItems.filter((item) => item.complete).length;
+
+  const pendingCodes: string[] = [];
+  if (!countryComplete) pendingCodes.push("Chagas Check");
+  for (const item of queueItems) {
+    if (!item.complete) pendingCodes.push(item.question.code);
+  }
+
+  let peakEscalation: EscalationLevel = "dsna";
+  let b5DonorContinues = false;
+
+  for (const { question } of queueItems) {
+    const flowKey = question.flowKey;
+    const flow = flowKey ? screeningFlows[flowKey] : null;
+    const followUps = flowKey ? (followUpAnswers[flowKey] ?? {}) : {};
+    let level = resolveInterviewEscalation(
+      question.escalation,
+      flow?.followUps ?? [],
+      followUps,
+      false
+    );
+
+    if (flowKey === "b5" && b5HazardousState.donorDecision === "continue") {
+      level = "consult_nurse";
+      b5DonorContinues = true;
+    }
+
+    if (flowKey === "c14") {
+      const state = deriveC14GuidanceState(c14Scenario, c14PartnerDonor);
+      if (state.lookupAttempted && state.uncertain) {
+        level = "consult_nurse";
+      }
+    }
+
+    if (needsNurseHighlight(level)) {
+      peakEscalation = maxEscalation(peakEscalation, level);
+    }
+  }
+
+  if (pendingCodes.length > 0) {
+    const codes = formatQuestionCodeList(pendingCodes);
+    return {
+      prompt:
+        pendingCodes.length === 1 && pendingCodes[0] === "Chagas Check"
+          ? "Record the donor's country of birth."
+          : `Complete the follow-up questions for ${codes}.`,
+      doneCount,
+      totalCount,
+    };
+  }
+
+  const nurseNotice = getRoleEscalationNotice(interviewRole, peakEscalation, {
+    b5DonorContinues,
+  });
+
+  if (
+    (needsNurseHighlight(peakEscalation) || overallStatus === "review") &&
+    nurseNotice
+  ) {
+    return {
+      prompt: nurseNotice.body,
+      doneCount,
+      totalCount,
+    };
+  }
+
+  if (overallStatus === "review") {
+    return {
+      prompt: "A nurse review is required before the donor can proceed.",
+      doneCount,
+      totalCount,
+    };
+  }
+
+  return {
+    prompt:
+      "All questions complete. Review the guidance below before proceeding.",
+    doneCount,
+    totalCount,
+  };
 }
 
 function ChecklistFilterBar({
@@ -481,7 +640,7 @@ function ChecklistFilterBar({
 
   return (
     <div
-      className="flex rounded-xl bg-[var(--clinical-surface-insights)] p-1"
+      className="flex rounded-xl bg-[var(--clinical-surface)] p-1"
       role="tablist"
       aria-label="Filter checklist questions"
     >
@@ -720,7 +879,7 @@ function ScreeningDetailPanel({
     onPartnerLifebloodDonorChange;
   return (
     <div
-      className={`min-h-0 flex-1 overflow-y-auto bg-white px-8 py-8 ${readOnly ? "pointer-events-none opacity-60" : ""}`}
+      className={`min-h-0 flex-1 overflow-y-auto bg-[#F5F6F8] px-8 py-8 ${readOnly ? "pointer-events-none opacity-60" : ""}`}
     >
       <p className="text-xs font-semibold uppercase tracking-wider text-[var(--clinical-on-surface-variant)]">
         {questionCode ?? flow.questionNumber} · {flow.section}
@@ -962,7 +1121,7 @@ function MandatoryQuestionCard({
 
       {/* Question */}
       <p className="mt-2 font-mono text-xs font-bold tracking-wide text-[var(--clinical-primary)]">
-        COB
+        Chagas Check
       </p>
       <p className="mt-1 text-sm font-semibold leading-snug text-[var(--clinical-on-surface)]">
         What is your country of birth?

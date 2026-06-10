@@ -93,20 +93,32 @@ export function HazardousActivityGuidance({
 
       {matched && (
         <>
-          <section className="rounded-xl border border-[var(--clinical-read-aloud-border)] bg-[var(--clinical-read-aloud)] p-4">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--clinical-secondary)]">
+          <section className="rounded-xl border border-[var(--clinical-outline)] border-l-4 border-l-[var(--clinical-on-surface-variant)] bg-[var(--clinical-surface-insights)] p-4">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--clinical-on-surface-variant)]">
               Medical advice
             </p>
-            <p className="mt-3 text-sm font-medium leading-6 text-[var(--clinical-on-surface)]">
+            <p className="mt-3 text-sm leading-6 text-[var(--clinical-on-surface)]">
               &ldquo;{buildHazardousReadAloudText(matched)}&rdquo;
             </p>
-            <label className="clinical-read-aloud-confirm mt-4 flex cursor-pointer items-center gap-3 rounded-lg px-4 py-3.5">
+            <label className="mt-4 flex cursor-pointer items-center gap-3 rounded-lg border border-[var(--clinical-outline)] bg-white px-4 py-3.5">
+              <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-colors ${
+                state.adviceReadToDonor
+                  ? "border-[var(--clinical-primary)] bg-[var(--clinical-primary)]"
+                  : "border-[var(--clinical-outline-variant)] bg-white"
+              }`}>
+                {state.adviceReadToDonor && (
+                  <svg className="h-3 w-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" aria-hidden>
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                )}
+              </span>
               <input
                 type="checkbox"
+                className="sr-only"
                 checked={state.adviceReadToDonor}
                 onChange={(e) => onAdviceReadToDonorChange(e.target.checked)}
               />
-              <span className="text-sm font-medium leading-snug text-[var(--clinical-on-surface)]">
+              <span className="text-sm font-medium text-[var(--clinical-on-surface)]">
                 I have read this advice to the donor
               </span>
             </label>

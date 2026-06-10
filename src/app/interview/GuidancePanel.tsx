@@ -5,25 +5,23 @@ import type { AggregatedInterviewGuidance } from "./interview-guidance";
 import { calculatePlasmaVolume, type DonorSex, type ReferenceGuidanceItem } from "./data";
 
 export function NextStepBanner({
-  nursePrompt,
-  pendingQuestionCodes,
+  prompt,
+  doneCount,
   totalCount,
 }: {
-  nursePrompt: string;
-  pendingQuestionCodes: string[];
+  prompt: string;
+  doneCount: number;
   totalCount: number;
 }) {
-  const pendingCount = pendingQuestionCodes.length;
-  const doneCount = Math.max(0, totalCount - pendingCount);
   const pct = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
 
   return (
-    <section className="shrink-0 border-b border-[var(--clinical-primary-subtle-border)] bg-[var(--clinical-primary-container)] px-5 py-4">
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--clinical-primary-dark)]">
+    <section className="shrink-0 border-b border-[var(--clinical-outline)] bg-[#F5F6F8] px-5 py-4">
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--clinical-on-surface-variant)]">
         Next step
       </p>
       <p className="mt-2 text-sm font-medium leading-6 text-[var(--clinical-on-surface)]">
-        {nursePrompt}
+        {prompt}
       </p>
       {totalCount > 0 && (
         <div className="mt-3">
@@ -31,13 +29,13 @@ export function NextStepBanner({
             <span className="text-xs text-[var(--clinical-on-surface-variant)]">
               {doneCount} of {totalCount} complete
             </span>
-            <span className="text-xs font-semibold text-[var(--clinical-primary-dark)]">
+            <span className="text-xs font-semibold text-[var(--clinical-on-surface)]">
               {pct}%
             </span>
           </div>
-          <div className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--clinical-primary-subtle-border)]">
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--clinical-outline)]">
             <div
-              className="h-full rounded-full bg-[var(--clinical-primary-dark)] transition-all duration-300"
+              className="h-full rounded-full bg-[var(--clinical-primary)] transition-all duration-300"
               style={{ width: `${pct}%` }}
             />
           </div>
@@ -117,11 +115,11 @@ export function GuidancePanel({
   return (
     <>
       {showSayToDonor ? (
-        <article className="rounded-xl border border-[var(--clinical-outline)] border-l-4 border-l-[var(--clinical-primary)] bg-white p-4">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--clinical-primary)]">
-            Say to donor
+        <article className="rounded-xl border border-[var(--clinical-primary-dark)] bg-[var(--clinical-primary-dark)] p-4">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-white/80">
+            Suggested response
           </p>
-          <p className="mt-3 font-[family-name:var(--font-public-sans)] text-lg font-semibold leading-snug text-[var(--clinical-on-surface)]">
+          <p className="mt-3 font-[family-name:var(--font-public-sans)] text-lg font-semibold leading-snug text-white">
             &ldquo;{sayToDonor}&rdquo;
           </p>
           <StatusBadge status={overallStatus} pendingCount={pendingCount} />
@@ -240,8 +238,8 @@ function ContributionCard({ item }: { item: AggregatedInterviewGuidance["contrib
       text: "text-[var(--clinical-on-surface)]",
     },
     clear: {
-      wrap: "bg-[#f3faef] border-[#c9e1bd]",
-      label: "text-[var(--clinical-success)]",
+      wrap: "bg-[var(--clinical-surface-insights)]",
+      label: "text-[var(--clinical-on-surface-variant)]",
       text: "text-[var(--clinical-on-surface)]",
     },
     pending: {
@@ -262,7 +260,6 @@ function ContributionCard({ item }: { item: AggregatedInterviewGuidance["contrib
         <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--clinical-primary)]">
           {item.questionCode}
         </span>
-        <SeverityPill severity={item.severity} />
         {item.deferralCode && (
           <span className="ml-auto">
             <CopyChip code={item.deferralCode} label="Deferral" />
@@ -337,16 +334,11 @@ function StatusBadge({
   };
 
   const styles: Record<AggregatedInterviewGuidance["overallStatus"], string> = {
-    eligible:
-      "bg-[#f3faef] text-[var(--clinical-success)] border-[#c9e1bd]",
-    restricted:
-      "bg-[var(--clinical-warning-subtle)] text-[var(--clinical-warning)] border-[var(--clinical-warning-subtle-border)]",
-    deferred:
-      "bg-[var(--clinical-primary-container)] text-[var(--clinical-primary)] border-[var(--clinical-primary-subtle-border)]",
-    pending:
-      "bg-[var(--clinical-surface-insights)] text-[var(--clinical-on-surface-variant)] border-[var(--clinical-outline)]",
-    review:
-      "bg-[var(--clinical-primary-container)] text-[var(--clinical-primary-dark)] border-[var(--clinical-primary-subtle-border)]",
+    eligible: "border-white bg-white text-[var(--clinical-on-surface)]",
+    restricted: "border-white bg-white text-[var(--clinical-on-surface)]",
+    deferred: "border-white bg-white text-[var(--clinical-on-surface)]",
+    pending: "border-white bg-white text-[var(--clinical-on-surface)]",
+    review: "border-white bg-white text-[var(--clinical-on-surface)]",
   };
 
   return (

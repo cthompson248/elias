@@ -154,19 +154,23 @@ export function FollowUpCompleteCard({
     cleared: {
       title: "No follow-up needed",
       body: "A No answer clears this item — see Guidance for your overall eligibility.",
-      articleClass: "border-[#c9e1bd] bg-[#f3faef]/80",
-      iconClass: "bg-[var(--clinical-success)]",
-      titleClass: "text-[var(--clinical-success)]",
+      articleClass: "border-[#a8e0cc] bg-[#D6F4EA]",
+      iconClass: "bg-[#0D7A5E]",
+      titleClass: "text-[#0D7A5E]",
       bodyClass: "text-[var(--clinical-on-surface-variant)]",
+      noteBoxClass: "border-[#a8e0cc] bg-white/60",
+      noteTextClass: "text-[var(--clinical-on-surface)]",
       icon: "check" as const,
     },
     complete: {
       title: "No further questions for this item",
       body: "See the Guidance panel for what to tell the donor.",
-      articleClass: "border-[#c9e1bd] bg-[#f3faef]/80",
-      iconClass: "bg-[var(--clinical-success)]",
-      titleClass: "text-[var(--clinical-success)]",
+      articleClass: "border-[#a8e0cc] bg-[#D6F4EA]",
+      iconClass: "bg-[#0D7A5E]",
+      titleClass: "text-[#0D7A5E]",
       bodyClass: "text-[var(--clinical-on-surface-variant)]",
+      noteBoxClass: "border-[#a8e0cc] bg-white/60",
+      noteTextClass: "text-[var(--clinical-on-surface)]",
       icon: "check" as const,
     },
     restricted: {
@@ -177,6 +181,9 @@ export function FollowUpCompleteCard({
       iconClass: "bg-[var(--clinical-warning)]",
       titleClass: "text-[var(--clinical-warning)]",
       bodyClass: "text-[var(--clinical-on-surface-variant)]",
+      noteBoxClass:
+        "border-[var(--clinical-warning-subtle-border)] bg-white/70",
+      noteTextClass: "text-[var(--clinical-warning)]",
       icon: "alert" as const,
     },
     review: {
@@ -187,6 +194,9 @@ export function FollowUpCompleteCard({
       iconClass: "bg-[var(--clinical-warning)]",
       titleClass: "text-[var(--clinical-warning)]",
       bodyClass: "text-[var(--clinical-on-surface-variant)]",
+      noteBoxClass:
+        "border-[var(--clinical-warning-subtle-border)] bg-white/70",
+      noteTextClass: "text-[var(--clinical-warning)]",
       icon: "alert" as const,
     },
     defer: {
@@ -197,6 +207,9 @@ export function FollowUpCompleteCard({
       iconClass: "bg-[var(--clinical-primary)]",
       titleClass: "text-[var(--clinical-primary-dark)]",
       bodyClass: "text-[var(--clinical-on-surface-variant)]",
+      noteBoxClass:
+        "border-[var(--clinical-primary-subtle-border)] bg-white/70",
+      noteTextClass: "text-[var(--clinical-primary-dark)]",
       icon: "alert" as const,
     },
   }[variant];
@@ -215,19 +228,17 @@ export function FollowUpCompleteCard({
             <AlertIcon className="h-5 w-5" />
           )}
         </span>
-        <p className={`text-base font-semibold ${config.titleClass}`}>
+        <p className={`text-sm font-semibold ${config.titleClass}`}>
           {config.title}
         </p>
       </div>
-      <p className={`mt-3 text-sm leading-relaxed ${config.bodyClass}`}>
-        {config.body}
-      </p>
       {note && (
-        <div className="mt-4 flex items-start gap-2 rounded-lg border border-[var(--clinical-warning-subtle-border)] bg-white/70 px-3 py-2.5">
-          <span className="mt-px text-[var(--clinical-warning)]">
-            <AlertIcon className="h-4 w-4 shrink-0" />
-          </span>
-          <p className="text-xs font-medium leading-relaxed text-[var(--clinical-warning)]">
+        <div
+          className={`mt-4 rounded-lg border px-3 py-2.5 ${config.noteBoxClass}`}
+        >
+          <p
+            className={`text-xs font-medium leading-relaxed ${config.noteTextClass}`}
+          >
             {note}
           </p>
         </div>
@@ -248,7 +259,7 @@ export function GuidanceActionPanel({
   footer?: string;
 }) {
   return (
-    <article className="flex gap-4 rounded-xl border border-[#c9e1bd] bg-[#f3faef] p-5">
+    <article className="flex gap-4 rounded-xl border border-[var(--clinical-success-subtle-border)] bg-[var(--clinical-success-subtle)] p-5">
       <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--clinical-success)] text-white">
         <CheckIcon className="h-5 w-5" />
       </span>

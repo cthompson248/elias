@@ -150,7 +150,7 @@ export function CountryOfBirthPanel({ selectedCode, onSelect }: Props) {
             className={`rounded-xl border p-5 ${
               selectedCountry.chagasRisk
                 ? "border-[var(--clinical-warning-subtle-border)] bg-[var(--clinical-warning-subtle)]/90"
-                : "border-[#c9e1bd] bg-[#f3faef]/80"
+                : "border-[#a8e0cc] bg-[#D6F4EA]"
             }`}
           >
             <div className="flex items-center gap-3">
@@ -158,7 +158,7 @@ export function CountryOfBirthPanel({ selectedCode, onSelect }: Props) {
                 className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white ${
                   selectedCountry.chagasRisk
                     ? "bg-[var(--clinical-warning)]"
-                    : "bg-[var(--clinical-success)]"
+                    : "bg-[#0D7A5E]"
                 }`}
               >
                 {selectedCountry.chagasRisk ? (
@@ -171,8 +171,8 @@ export function CountryOfBirthPanel({ selectedCode, onSelect }: Props) {
                 <p
                   className={`text-sm font-semibold ${
                     selectedCountry.chagasRisk
-                      ? "text-[var(--clinical-warning)]"
-                      : "text-[var(--clinical-success)]"
+                    ? "text-[var(--clinical-warning)]"
+                    : "text-[#0D7A5E]"
                   }`}
                 >
                   {selectedCountry.chagasRisk
