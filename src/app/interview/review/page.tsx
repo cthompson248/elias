@@ -49,6 +49,11 @@ import {
   initialC8FollowUpAnswers,
 } from "../session";
 import { donor } from "../data";
+import { CountryOfBirthPanel } from "../CountryOfBirthPanel";
+import {
+  getCountryByCode,
+  CHAGAS_GUIDANCE,
+} from "../country-of-birth";
 import { resolveInterviewEscalation, type EscalationLevel } from "../escalation";
 import { InterviewHeader } from "../InterviewHeader";
 import {
@@ -60,6 +65,8 @@ import {
 } from "../interview-role";
 
 type FollowUpAnswer = { pillId: string | null; custom: string };
+
+const COUNTRY_OF_BIRTH_ID = "nurse-mandatory-country-of-birth";
 
 export default function InterviewReviewPage() {
   const router = useRouter();
@@ -75,9 +82,10 @@ export default function InterviewReviewPage() {
   const [activeTab, setActiveTab] = useState<"interview" | "history" | "eligibility">(
     "interview"
   );
+  const [countryOfBirth, setCountryOfBirth] = useState<string | null>(null);
   const [checklistFilter, setChecklistFilter] = useState<ChecklistFilter>("review");
-  const [activeItemId, setActiveItemId] = useState(
-    () => reviewQueue[0]?.id ?? allQuestions[0]?.id ?? "b6"
+  const [activeItemId, setActiveItemId] = useState<string>(
+    () => COUNTRY_OF_BIRTH_ID
   );
   const [questionResponses, setQuestionResponses] = useState(() =>
     initialQuestionResponses(allQuestions, reviewQueueIds)
@@ -209,6 +217,9 @@ export default function InterviewReviewPage() {
     effectiveEscalation = "consult_nurse";
   }
 
+  const selectedCountry = countryOfBirth ? getCountryByCode(countryOfBirth) : null;
+  const chagasRisk = selectedCountry?.chagasRisk ?? false;
+
   const roleNotice = getRoleEscalationNotice(interviewRole, effectiveEscalation, {
     b5DonorContinues:
       activeFlowKey === "b5" && b5HazardousState.donorDecision === "continue",
@@ -259,6 +270,16 @@ export default function InterviewReviewPage() {
           </div>
 
           <ul className="min-h-0 flex-1 space-y-3 overflow-y-auto px-3 pb-4">
+            {/* Mandatory nurse question — always pinned first */}
+            <li>
+              <MandatoryQuestionCard
+                isActive={activeItemId === COUNTRY_OF_BIRTH_ID}
+                answered={countryOfBirth !== null}
+                chagasRisk={chagasRisk}
+                selectedCountryName={selectedCountry?.name ?? null}
+                onSelect={() => setActiveItemId(COUNTRY_OF_BIRTH_ID)}
+              />
+            </li>
             {filteredQuestions.map((question) => (
               <li key={question.id}>
                 <ChecklistQuestionCard
@@ -277,7 +298,12 @@ export default function InterviewReviewPage() {
 
         {/* Center: clarification */}
         <main className="col-span-2 flex min-h-0 min-w-0 flex-col overflow-hidden">
-          {activeTab !== "interview" ? (
+          {activeItemId === COUNTRY_OF_BIRTH_ID && activeTab === "interview" ? (
+            <CountryOfBirthPanel
+              selectedCode={countryOfBirth}
+              onSelect={setCountryOfBirth}
+            />
+          ) : activeTab !== "interview" ? (
             <div className="flex flex-1 items-center justify-center p-8 text-sm text-[var(--clinical-on-surface-variant)]">
               {activeTab === "history"
                 ? "Donor history view — prototype placeholder."
@@ -423,6 +449,9 @@ export default function InterviewReviewPage() {
           {roleNotice && <EscalationBanner notice={roleNotice} />}
 
           <div className="min-h-0 flex-1 px-4 pb-6 pt-4">
+            {chagasRisk && (
+              <ChagasRiskCard country={selectedCountry!.name} />
+            )}
             <GuidancePanel
               guidance={aggregatedGuidance}
               donorWeightKg={parseFloat(donor.profile.weightKg) || undefined}
@@ -888,6 +917,104 @@ function AlertIcon({ className }: { className?: string }) {
     <svg className={className} viewBox="0 0 24 24" fill="currentColor">
       <path d="M12 2L1 21h22L12 2zm0 4.5L19.5 19h-15L12 6.5zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z" />
     </svg>
+  );
+}
+
+function MandatoryQuestionCard({
+  isActive,
+  answered,
+  chagasRisk,
+  selectedCountryName,
+  onSelect,
+}: {
+  isActive: boolean;
+  answered: boolean;
+  chagasRisk: boolean;
+  selectedCountryName: string | null;
+  onSelect: () => void;
+}) {
+  return (
+    <article
+      role="button"
+      tabIndex={0}
+      onClick={onSelect}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSelect();
+        }
+      }}
+      className={`cursor-pointer rounded-xl border bg-white p-4 transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--clinical-primary)] ${
+        isActive
+          ? "border-[var(--clinical-primary)] ring-1 ring-[var(--clinical-primary-subtle-border)]"
+          : "border-[var(--clinical-outline)] hover:border-[var(--clinical-outline-variant)]"
+      }`}
+    >
+      {/* Top row — category + status icon */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="shrink-0 rounded-full border border-[var(--clinical-primary-subtle-border)] bg-[var(--clinical-primary-container)] px-2 py-0.5 text-[10px] font-semibold text-[var(--clinical-primary)]">
+            Mandatory
+          </span>
+        </div>
+        <ChevronRightIcon className="h-4 w-4 shrink-0 text-[var(--clinical-outline-variant)]" />
+      </div>
+
+      {/* Question */}
+      <p className="mt-2 font-mono text-xs font-bold tracking-wide text-[var(--clinical-primary)]">
+        COB
+      </p>
+      <p className="mt-1 text-sm font-semibold leading-snug text-[var(--clinical-on-surface)]">
+        What is your country of birth?
+      </p>
+
+      {/* Answer badge */}
+      {answered && selectedCountryName && (
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <span className="clinical-toggle-yes-selected inline-flex items-center rounded-lg px-2.5 py-2 text-xs font-semibold">
+            {selectedCountryName}
+          </span>
+          {chagasRisk && (
+            <span className="inline-flex items-center gap-1 rounded-lg border border-[var(--clinical-warning-subtle-border)] bg-[var(--clinical-warning-subtle)] px-2.5 py-2 text-xs font-semibold text-[var(--clinical-warning)]">
+              ⚠ Chagas risk
+            </span>
+          )}
+        </div>
+      )}
+    </article>
+  );
+}
+
+function ChagasRiskCard({ country }: { country: string }) {
+  return (
+    <article className="mb-4 overflow-hidden rounded-xl border border-[var(--clinical-warning-subtle-border)] bg-white shadow-sm">
+      <div className="border-b border-[var(--clinical-warning-subtle-border)] bg-[var(--clinical-warning-subtle)] px-4 py-2.5">
+        <p className="text-[11px] font-bold uppercase tracking-widest text-[var(--clinical-warning)]">
+          ⚠ Chagas Risk — {country}
+        </p>
+      </div>
+      <div className="border-b border-[var(--clinical-outline)] px-4 py-3">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--clinical-warning)]">
+          Action
+        </p>
+        <p className="mt-1 text-sm font-medium leading-snug text-[var(--clinical-on-surface)]">
+          {CHAGAS_GUIDANCE.action}
+        </p>
+      </div>
+      <div className="px-4 py-3">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--clinical-on-surface-variant)]">
+          Why
+        </p>
+        <p className="mt-1 text-sm leading-relaxed text-[var(--clinical-on-surface-variant)]">
+          {CHAGAS_GUIDANCE.reasoning}
+        </p>
+      </div>
+      <div className="border-t border-[var(--clinical-outline)] px-4 py-2.5">
+        <span className="text-xs font-medium text-[var(--clinical-secondary)]">
+          {CHAGAS_GUIDANCE.reference}
+        </span>
+      </div>
+    </article>
   );
 }
 
