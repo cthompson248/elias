@@ -6,6 +6,9 @@ import {
 import type { InterviewQuestion } from "./data";
 
 const SELECTION_KEY = "elias-interview-selection";
+const C8A_SELECTED_KEY = "elias-interview-c8a-selected";
+
+export const C8_QUESTION_ID = "c8";
 
 export function saveInterviewSelection(questionIds: string[]) {
   if (typeof window === "undefined") return;
@@ -60,4 +63,27 @@ export function getTabletYesIds(): string[] {
   return questionBank
     .filter((q) => q.tabletResponse === "yes")
     .map((q) => q.id);
+}
+
+export function saveC8aSelected(selected: boolean) {
+  if (typeof window === "undefined") return;
+  sessionStorage.setItem(C8A_SELECTED_KEY, selected ? "1" : "0");
+}
+
+export function loadC8aSelected(): boolean {
+  if (typeof window === "undefined") return false;
+  return sessionStorage.getItem(C8A_SELECTED_KEY) === "1";
+}
+
+/** Prefill C8a follow-up as Yes when the nurse ticked C8a on the profile screen. */
+export function initialC8FollowUpAnswers(): Record<
+  string,
+  Record<string, { pillId: string; custom: string }>
+> {
+  if (!loadC8aSelected()) return {};
+  return {
+    c8: {
+      c8a: { pillId: "yes", custom: "" },
+    },
+  };
 }

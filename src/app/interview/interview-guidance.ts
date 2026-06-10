@@ -43,9 +43,12 @@ export interface QuestionGuidanceContribution {
   flowKey?: string;
   status: QuestionGuidanceStatus;
   donorMessage: string | null;
+  /** Primary nurse action — what to DO right now. Shown prominently in the guidance card. */
+  action?: string;
+  /** Deferral code (e.g. "A185") — surfaced as a one-click copy chip for pasting into NBMS. */
+  deferralCode?: string;
   reasoning: string;
   reference: string;
-  deferralNote?: string;
   severity: GuidanceSeverity;
   /** e.g. "three-month" — used when synthesising plasma vs whole-blood messaging */
   wholeBloodDeferralPeriod?: string;
@@ -208,8 +211,9 @@ function buildB5Contribution(
       ...base,
       status: "complete",
       donorMessage: buildHazardousOutcomeMessage(matched, "defer"),
+      action: `Apply deferral ${matched.deferralCode} per GSBD.`,
+      deferralCode: matched.deferralCode,
       reasoning: matched.ifNotDonate,
-      deferralNote: `Apply deferral ${matched.deferralCode} per GSBD.`,
       severity: "defer",
     };
   }
@@ -218,8 +222,8 @@ function buildB5Contribution(
     ...base,
     status: "complete",
     donorMessage: buildHazardousOutcomeMessage(matched, "continue"),
+    action: "Add a medical note in NBMS before the donor proceeds.",
     reasoning: matched.ifContinueDonation,
-      deferralNote: "Nurse must add a medical note in NBMS before the donor can proceed.",
     severity: "review",
   };
 }
@@ -255,8 +259,9 @@ function buildC8Contribution(
       status: "complete",
       donorMessage:
         "Based on your responses, you're currently eligible to donate plasma, but we have a six-month deferral on whole blood.",
+      action: c8AnalSexYesGuidance.actions.allogeneic,
+      deferralCode: c8AnalSexYesGuidance.deferralCode,
       reasoning: c8AnalSexYesGuidance.explanation,
-      deferralNote: c8AnalSexYesGuidance.actions.allogeneic,
       reference: `GSBD · ${c8AnalSexYesGuidance.deferralCode}`,
       severity: "restricted",
       wholeBloodDeferralPeriod: "six-month",
@@ -269,6 +274,7 @@ function buildC8Contribution(
       status: "complete",
       donorMessage:
         "You haven't had anal sex in the last three months, so this answer doesn't restrict your donation — you're fine to continue on this point.",
+      action: "Accept for unrestricted donation.",
       reasoning: c8AnalSexNoGuidance.explanation,
       severity: "clear",
     };
@@ -279,6 +285,7 @@ function buildC8Contribution(
     status: "needs_review",
     donorMessage:
       "I need to check with a colleague before we can confirm your eligibility on this question — I won't keep you waiting long.",
+    action: "Document privately and consult GSBD — Sexual activity deferrals before proceeding.",
     reasoning: c8AnalSexDeclinedGuidance.explanation,
     severity: "review",
   };
@@ -365,8 +372,9 @@ function buildC14Contribution(
       status: "complete",
       donorMessage:
         "Based on your responses, you're currently eligible to donate plasma, but we have a three-month deferral on whole blood.",
+      action: formatPrimaryDeferralSummary(matched.actions),
+      deferralCode: matched.actions.deferralCode,
       reasoning: matched.scenarioNotePartnerNotDonor,
-      deferralNote: formatPrimaryDeferralSummary(matched.actions),
       reference: `GSBD · ${matched.actions.deferralCode}`,
       severity: "restricted",
       wholeBloodDeferralPeriod: "three-month",
@@ -378,8 +386,9 @@ function buildC14Contribution(
     status: "complete",
     donorMessage:
       "Based on your responses, you're currently eligible to donate plasma, but we have a three-month deferral on whole blood.",
+    action: formatPrimaryDeferralSummary(matched.actions),
+    deferralCode: matched.actions.deferralCode,
     reasoning: matched.explanation,
-    deferralNote: formatPrimaryDeferralSummary(matched.actions),
     reference: `GSBD · ${matched.actions.deferralCode}`,
     severity: "restricted",
     wholeBloodDeferralPeriod: "three-month",
@@ -402,7 +411,7 @@ function buildGenericContribution(
     flowKey,
     reference: insight?.reference ?? "GSBD",
     reasoning: insight?.body ?? flow.flagReason,
-    deferralNote: insight?.deferralNote,
+    action: insight?.deferralNote,
   };
 
   if (followUpsNeeded && !areStandardFollowUpsComplete(flow, followUps)) {

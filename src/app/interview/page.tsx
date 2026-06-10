@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
+import { screeningFlows } from "./data";
 import { DonorProfilePanel } from "./DonorProfilePanel";
 import { InterviewHeader } from "./InterviewHeader";
 import {
@@ -10,8 +11,11 @@ import {
   type QuestionBankEntry,
 } from "./question-bank";
 import {
+  C8_QUESTION_ID,
   getTabletYesIds,
+  loadC8aSelected,
   loadInterviewSelection,
+  saveC8aSelected,
   saveInterviewSelection,
 } from "./session";
 
@@ -28,6 +32,8 @@ export default function InterviewSelectionPage() {
     return new Set(getTabletYesIds());
   });
   const [search, setSearch] = useState("");
+  const [c8aSelected, setC8aSelected] = useState(() => loadC8aSelected());
+  const c8aQuestion = screeningFlows.c8.followUps[0].question;
 
   const filteredGroups = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -64,12 +70,22 @@ export default function InterviewSelectionPage() {
     });
   }
 
+  function toggleC8a() {
+    setC8aSelected((prev) => {
+      const next = !prev;
+      saveC8aSelected(next);
+      return next;
+    });
+  }
+
   function selectAllTabletYes() {
     setSelectedIds(new Set(getTabletYesIds()));
   }
 
   function clearSelection() {
     setSelectedIds(new Set());
+    setC8aSelected(false);
+    saveC8aSelected(false);
   }
 
   function selectVisible() {
@@ -85,6 +101,7 @@ export default function InterviewSelectionPage() {
   function continueToReview() {
     if (selectedIds.size === 0) return;
     saveInterviewSelection(Array.from(selectedIds));
+    saveC8aSelected(c8aSelected);
     router.push("/interview/review");
   }
 
@@ -141,12 +158,20 @@ export default function InterviewSelectionPage() {
                       </h2>
                       <ul className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
                         {group.questions.map((q) => (
-                          <SelectionRow
-                            key={q.id}
-                            question={q}
-                            selected={selectedIds.has(q.id)}
-                            onToggle={() => toggle(q.id)}
-                          />
+                          <Fragment key={q.id}>
+                            <SelectionRow
+                              question={q}
+                              selected={selectedIds.has(q.id)}
+                              onToggle={() => toggle(q.id)}
+                            />
+                            {q.id === C8_QUESTION_ID && (
+                              <C8aSelectionRow
+                                question={c8aQuestion}
+                                selected={c8aSelected}
+                                onToggle={toggleC8a}
+                              />
+                            )}
+                          </Fragment>
                         ))}
                       </ul>
                     </section>
@@ -191,6 +216,42 @@ function balanceGroupsIntoColumns<
   }
 
   return columns;
+}
+
+function C8aSelectionRow({
+  question,
+  selected,
+  onToggle,
+}: {
+  question: string;
+  selected: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <li className="border-b border-[var(--clinical-outline)] last:border-b-0">
+      <label
+        className={`flex cursor-pointer items-start gap-3 px-4 py-2.5 transition-colors hover:bg-[var(--clinical-surface)] ${
+          selected ? "bg-[var(--clinical-primary-container)]/60" : ""
+        }`}
+      >
+        <input
+          type="checkbox"
+          checked={selected}
+          onChange={onToggle}
+          className="mt-0.5 h-4 w-4 shrink-0 rounded accent-[var(--clinical-primary)]"
+        />
+        <span className="w-[4.5rem] shrink-0 font-mono text-xs font-bold tracking-wide text-[var(--clinical-primary)]">
+          C8a
+        </span>
+        <span
+          className="line-clamp-2 min-w-0 flex-1 text-sm font-medium leading-snug text-[var(--clinical-on-surface)]"
+          title={question}
+        >
+          {question}
+        </span>
+      </label>
+    </li>
+  );
 }
 
 function SelectionRow({

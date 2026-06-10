@@ -46,6 +46,7 @@ import {
 import {
   getAllInterviewQuestions,
   getSessionReviewQueueIds,
+  initialC8FollowUpAnswers,
 } from "../session";
 import { resolveInterviewEscalation, type EscalationLevel } from "../escalation";
 import { InterviewHeader } from "../InterviewHeader";
@@ -82,7 +83,7 @@ export default function InterviewReviewPage() {
   );
   const [followUpAnswers, setFollowUpAnswers] = useState<
     Record<string, Record<string, FollowUpAnswer>>
-  >({});
+  >(() => initialC8FollowUpAnswers());
   const [notesByQuestion, setNotesByQuestion] = useState<Record<string, string>>(
     {}
   );
@@ -181,7 +182,7 @@ export default function InterviewReviewPage() {
   const activeFollowUpCompleteVariant = activeContribution
     ? getFollowUpCompleteVariant(activeContribution)
     : "complete";
-  const activeFollowUpDeferralNote = activeContribution?.deferralNote ?? undefined;
+  const activeFollowUpDeferralNote = activeContribution?.action ?? undefined;
 
   let effectiveEscalation: EscalationLevel = activeQuestion
     ? resolveInterviewEscalation(

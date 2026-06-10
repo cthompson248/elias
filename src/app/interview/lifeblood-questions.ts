@@ -276,7 +276,7 @@ export const lifebloodQuestionBank: QuestionBankEntry[] = [
   entry(
     "C8",
     C,
-    "In the last 6 months, sex (excluding oral) with more than one person?",
+    "In the last 6 months have you had sex, excluding oral sex, with more than one person?",
     "no",
     "pending",
     "c8"

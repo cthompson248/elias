@@ -387,7 +387,7 @@ export const lifebloodScreeningFlows: Record<string, ScreeningQuestionFlow> = {
     section: "SECTION C",
     questionNumber: "C8",
     question:
-      "In the last 6 months, sex (excluding oral) with more than one person?",
+      "In the last 6 months have you had sex, excluding oral sex, with more than one person?",
     donorResponse: "yes",
     c8MultiplePartnersGuidance: true,
     flagReason:
