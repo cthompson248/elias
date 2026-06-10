@@ -48,6 +48,7 @@ import {
   getSessionReviewQueueIds,
   initialC8FollowUpAnswers,
 } from "../session";
+import { donor } from "../data";
 import { resolveInterviewEscalation, type EscalationLevel } from "../escalation";
 import { InterviewHeader } from "../InterviewHeader";
 import {
@@ -424,7 +425,8 @@ export default function InterviewReviewPage() {
           <div className="min-h-0 flex-1 px-4 pb-6 pt-4">
             <GuidancePanel
               guidance={aggregatedGuidance}
-
+              donorWeightKg={parseFloat(donor.profile.weightKg) || undefined}
+              donorSex={donor.profile.sex || undefined}
             />
           </div>
         </aside>

@@ -20,8 +20,19 @@ type EditableField = keyof Pick<
   | "aboGroup"
 >;
 
+interface VisitMeasurements {
+  capHaemoglobin: string;
+  pulseRate: string;
+  radialPost: string;
+}
+
 export function DonorProfilePanel() {
   const [profile, setProfile] = useState<DonorProfileDetails>(donor.profile);
+  const [visit, setVisit] = useState<VisitMeasurements>({
+    capHaemoglobin: "",
+    pulseRate: "",
+    radialPost: "",
+  });
 
   function updateField<K extends EditableField>(
     field: K,
@@ -30,13 +41,21 @@ export function DonorProfilePanel() {
     setProfile((prev) => ({ ...prev, [field]: value }));
   }
 
+  function updateVisit<K extends keyof VisitMeasurements>(
+    field: K,
+    value: string
+  ) {
+    setVisit((prev) => ({ ...prev, [field]: value }));
+  }
+
   const heightImperial = useMemo(
     () => formatHeightImperial(profile.heightCm),
     [profile.heightCm]
   );
 
   return (
-    <div className="flex flex-col gap-4 p-4">
+    <div className="flex flex-col gap-3 p-4">
+      {/* ── Static donor details ── */}
       <section className="rounded-lg border border-[var(--clinical-outline)] bg-white p-4">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-[var(--clinical-on-surface-variant)]">
           Donor details
@@ -97,8 +116,17 @@ export function DonorProfilePanel() {
               className={profileInputClassName}
             />
           </ProfileField>
+        </div>
+      </section>
 
-          <ProfileField label="Type">
+      {/* ── Per-visit measurements ── */}
+      <section className="rounded-lg border border-[var(--clinical-outline)] bg-white p-4">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-[var(--clinical-on-surface-variant)]">
+          This visit
+        </h2>
+
+        <div className="mt-4 flex flex-col gap-3">
+          <ProfileField label="Donation type">
             <div className="relative">
               <select
                 value={profile.donationType}
@@ -114,7 +142,7 @@ export function DonorProfilePanel() {
                     : ""
                 }`}
               >
-                <option value="">Select Type</option>
+                <option value="">Select type</option>
                 {donationTypeOptions.map((option) => (
                   <option key={option.id} value={option.id}>
                     {option.label}
@@ -146,6 +174,39 @@ export function DonorProfilePanel() {
               inputMode="numeric"
               value={profile.weightKg}
               onChange={(e) => updateField("weightKg", e.target.value)}
+              className={profileInputClassName}
+            />
+          </ProfileField>
+
+          <ProfileField label="Capillary Haemoglobin (g/dL)">
+            <input
+              type="text"
+              inputMode="decimal"
+              value={visit.capHaemoglobin}
+              onChange={(e) => updateVisit("capHaemoglobin", e.target.value)}
+              placeholder="e.g. 14.2"
+              className={profileInputClassName}
+            />
+          </ProfileField>
+
+          <ProfileField label="Pulse rate (bpm)">
+            <input
+              type="text"
+              inputMode="numeric"
+              value={visit.pulseRate}
+              onChange={(e) => updateVisit("pulseRate", e.target.value)}
+              placeholder="e.g. 72"
+              className={profileInputClassName}
+            />
+          </ProfileField>
+
+          <ProfileField label="Radial post measurement">
+            <input
+              type="text"
+              inputMode="numeric"
+              value={visit.radialPost}
+              onChange={(e) => updateVisit("radialPost", e.target.value)}
+              placeholder="e.g. 120/80"
               className={profileInputClassName}
             />
           </ProfileField>

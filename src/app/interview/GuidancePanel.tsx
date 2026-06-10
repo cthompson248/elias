@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { AggregatedInterviewGuidance } from "./interview-guidance";
-import type { ReferenceGuidanceItem } from "./data";
+import { calculatePlasmaVolume, type DonorSex, type ReferenceGuidanceItem } from "./data";
 
 export function NextStepBanner({
   nursePrompt,
@@ -89,9 +89,13 @@ export function EscalationBanner({
 
 export function GuidancePanel({
   guidance,
+  donorWeightKg,
+  donorSex,
 }: {
   guidance: AggregatedInterviewGuidance;
   referenceLinks?: ReferenceGuidanceItem[];
+  donorWeightKg?: number;
+  donorSex?: DonorSex | "";
 }) {
   const {
     sayToDonor,
@@ -104,6 +108,11 @@ export function GuidancePanel({
   );
   const guidanceReady = sayToDonor !== null;
   const showSayToDonor = guidanceReady && overallStatus !== "review";
+
+  const plasmaVolume =
+    overallStatus === "restricted" && donorWeightKg && donorWeightKg > 0
+      ? calculatePlasmaVolume(donorWeightKg, donorSex ?? "")
+      : null;
 
   return (
     <>
@@ -118,6 +127,10 @@ export function GuidancePanel({
           <StatusBadge status={overallStatus} pendingCount={pendingCount} />
         </article>
       ) : null}
+
+      {plasmaVolume && (
+        <PlasmaVolumeCard volume={plasmaVolume} />
+      )}
 
       {resolvedContributions.length > 0 && (
         <section className="mt-6">
@@ -136,7 +149,37 @@ export function GuidancePanel({
   );
 }
 
-function CopyChip({ code }: { code: string }) {
+function PlasmaVolumeCard({ volume }: { volume: ReturnType<typeof calculatePlasmaVolume> }) {
+  const { volumeMl, pct, maxMl, collectMl } = volume;
+  const isCapped = volumeMl > maxMl;
+
+  return (
+    <article className="mt-4 overflow-hidden rounded-xl border border-[var(--clinical-outline)] bg-white shadow-sm">
+      <div className="flex items-center justify-between border-b border-[var(--clinical-outline)] px-4 py-2.5">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--clinical-on-surface-variant)]">
+          Volume to Collect
+        </p>
+        <CopyChip code={`${collectMl} mL`} />
+      </div>
+      <div className="px-4 py-3">
+        <p className="text-sm text-[var(--clinical-on-surface-variant)]">
+          {isCapped ? (
+            <>
+              Calc. {volumeMl} mL at {pct}%{" "}
+              <span className="font-semibold text-[var(--clinical-warning)]">
+                — capped at {maxMl} mL max
+              </span>
+            </>
+          ) : (
+            <>{pct}% of TBV &middot; max {maxMl} mL</>
+          )}
+        </p>
+      </div>
+    </article>
+  );
+}
+
+function CopyChip({ code, label }: { code: string; label?: string }) {
   const [copied, setCopied] = useState(false);
 
   function handleCopy() {
@@ -146,12 +189,18 @@ function CopyChip({ code }: { code: string }) {
     });
   }
 
+  const display = label ? (
+    <span>{label}: <span className="font-bold">{code}</span></span>
+  ) : (
+    <span className="font-bold">{code}</span>
+  );
+
   return (
     <button
       type="button"
       onClick={handleCopy}
       title={copied ? "Copied!" : `Copy ${code} to clipboard`}
-      className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-bold tabular-nums transition-all duration-150 ${
+      className={`inline-flex shrink-0 items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium tabular-nums transition-all duration-150 ${
         copied
           ? "border-[#c9e1bd] bg-[#f3faef] text-[var(--clinical-success)]"
           : "border-[var(--clinical-outline)] bg-white text-[var(--clinical-on-surface)] hover:border-[var(--clinical-primary)] hover:bg-[var(--clinical-primary-container)] hover:text-[var(--clinical-primary)]"
@@ -160,12 +209,12 @@ function CopyChip({ code }: { code: string }) {
       {copied ? (
         <>
           <CheckIcon className="h-3.5 w-3.5 shrink-0" />
-          <span>Deferral: <span className="font-bold">{code}</span></span>
-          <span className="text-[var(--clinical-success)]">Copied</span>
+          {display}
+          <span>Copied</span>
         </>
       ) : (
         <>
-          <span>Deferral: <span className="font-bold">{code}</span></span>
+          {display}
           <ClipboardIcon className="h-3.5 w-3.5 shrink-0 opacity-60" />
         </>
       )}
@@ -216,7 +265,7 @@ function ContributionCard({ item }: { item: AggregatedInterviewGuidance["contrib
         <SeverityPill severity={item.severity} />
         {item.deferralCode && (
           <span className="ml-auto">
-            <CopyChip code={item.deferralCode} />
+            <CopyChip code={item.deferralCode} label="Deferral" />
           </span>
         )}
       </div>

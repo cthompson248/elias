@@ -110,6 +110,33 @@ export const donor: Donor = {
   },
 };
 
+export interface PlasmaVolumeResult {
+  /** Target collection volume in mL (before cap). */
+  volumeMl: number;
+  /** TBV percentage used (always 13). */
+  pct: number;
+  /** Per-session maximum in mL. */
+  maxMl: number;
+  /** Actual volume to collect — lesser of volumeMl and maxMl. */
+  collectMl: number;
+}
+
+/**
+ * Calculates the plasma volume to collect per Lifeblood guidelines.
+ * TBV = weight × 70 mL/kg (males) or 65 mL/kg (females).
+ * Target = 13% of TBV, capped at 750 mL per session.
+ */
+export function calculatePlasmaVolume(
+  weightKg: number,
+  sex: DonorSex | ""
+): PlasmaVolumeResult {
+  const tbvFactor = sex === "female" ? 65 : 70;
+  const pct = 13;
+  const maxMl = 750;
+  const volumeMl = Math.round(weightKg * tbvFactor * (pct / 100));
+  return { volumeMl, pct, maxMl, collectMl: Math.min(volumeMl, maxMl) };
+}
+
 /** @deprecated Use filterChecklistQuestions with full bank + review queue ids */
 export function filterInterviewQuestions(
   questions: InterviewQuestion[],
