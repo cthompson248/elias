@@ -94,8 +94,8 @@ export function HazardousActivityGuidance({
       {matched && (
         <>
           <section className="rounded-xl border border-[var(--clinical-outline)] border-l-4 border-l-[var(--clinical-on-surface-variant)] bg-[var(--clinical-surface-insights)] p-4">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--clinical-on-surface-variant)]">
-              Medical advice
+            <p className="text-[11px] font-semibold tracking-wider text-[var(--clinical-on-surface-variant)]">
+              MEDICAL ADVICE (Read to donor)
             </p>
             <p className="mt-3 text-sm leading-6 text-[var(--clinical-on-surface)]">
               &ldquo;{buildHazardousReadAloudText(matched)}&rdquo;
