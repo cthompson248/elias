@@ -1,9 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
 import { donor } from "./data";
-import { loadInterviewRole, type InterviewRole } from "./interview-role";
 
 export type InterviewNavId = "interview" | "history" | "eligibility" | "profile";
 
@@ -20,7 +18,6 @@ export function InterviewHeader({
   activeNav: InterviewNavId;
   onTabChange?: (tab: Exclude<InterviewNavId, "profile">) => void;
 }) {
-  const [interviewRole] = useState<InterviewRole>(() => loadInterviewRole());
   const initials = donor.name
     .split(" ")
     .map((part) => part[0])
@@ -44,10 +41,6 @@ export function InterviewHeader({
         </div>
 
         <div className="hidden h-9 w-px bg-[var(--clinical-outline)] sm:block" />
-
-        <p className="hidden rounded-full border border-[var(--clinical-outline)] bg-[var(--clinical-surface)] px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-[var(--clinical-on-surface-variant)] sm:block">
-          {interviewRole === "dsna" ? "DSNA" : "Nurse"}
-        </p>
 
         <div className="hidden text-sm text-[var(--clinical-on-surface-variant)] md:block">
           <span className="text-xs font-semibold uppercase tracking-wider text-[var(--clinical-on-surface-variant)]">

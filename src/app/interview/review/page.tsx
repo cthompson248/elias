@@ -640,7 +640,7 @@ function ChecklistFilterBar({
 
   return (
     <div
-      className="flex rounded-xl bg-[var(--clinical-surface)] p-1"
+      className="flex rounded-xl bg-[var(--clinical-surface-insights)] p-1"
       role="tablist"
       aria-label="Filter checklist questions"
     >

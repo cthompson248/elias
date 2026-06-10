@@ -56,7 +56,7 @@ export function DonorProfilePanel() {
   return (
     <div className="flex flex-col gap-3 p-4">
       {/* ── Static donor details ── */}
-      <section className="rounded-lg border border-[var(--clinical-outline)] bg-white p-4">
+      <section className="rounded-lg bg-white p-4">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-[var(--clinical-on-surface-variant)]">
           Donor details
         </h2>
@@ -120,7 +120,7 @@ export function DonorProfilePanel() {
       </section>
 
       {/* ── Per-visit measurements ── */}
-      <section className="rounded-lg border border-[var(--clinical-outline)] bg-white p-4">
+      <section className="rounded-lg bg-white p-4">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-[var(--clinical-on-surface-variant)]">
           This visit
         </h2>

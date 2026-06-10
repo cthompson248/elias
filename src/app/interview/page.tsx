@@ -110,19 +110,19 @@ export default function InterviewSelectionPage() {
       <InterviewHeader activeNav="profile" />
 
       <div className="grid min-h-0 flex-1 grid-cols-4 overflow-hidden">
-        <aside className="col-span-1 min-h-0 overflow-y-auto border-r border-[var(--clinical-outline)] bg-[var(--clinical-surface)]">
+        <aside className="col-span-1 min-h-0 overflow-y-auto border-r border-[var(--clinical-outline)] bg-white">
           <DonorProfilePanel />
         </aside>
 
         <div className="col-span-3 flex min-h-0 flex-col overflow-hidden">
-          <div className="shrink-0 border-b border-[var(--clinical-outline)] bg-white px-6 py-3">
+          <div className="shrink-0 border-b border-[var(--clinical-outline)] bg-[#F5F6F8] px-6 py-3">
             <div className="flex flex-wrap items-center gap-3">
               <input
                 type="search"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search code or question…"
-                className="min-w-[200px] flex-1 rounded-lg border border-[var(--clinical-outline)] px-3 py-2 text-sm outline-none focus:border-[var(--clinical-primary)] focus:ring-2 focus:ring-[var(--clinical-primary)]/20"
+                className="min-w-[200px] flex-1 rounded-lg border border-[var(--clinical-outline)] bg-[#FAFBFC] px-3 py-2 text-sm outline-none focus:border-[var(--clinical-primary)] focus:ring-2 focus:ring-[var(--clinical-primary)]/20"
               />
               <ActionButton onClick={selectAllTabletYes}>
                 All tablet Yes ({tabletYesIds.size})
@@ -138,11 +138,11 @@ export default function InterviewSelectionPage() {
           </div>
 
           {visibleCount === 0 ? (
-            <p className="flex flex-1 items-center justify-center text-sm text-[var(--clinical-on-surface-variant)]">
+            <p className="flex flex-1 items-center justify-center bg-[var(--clinical-surface-insights)] text-sm text-[var(--clinical-on-surface-variant)]">
               No questions match your search.
             </p>
           ) : (
-            <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-hidden p-6 lg:grid-cols-3">
+            <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-hidden bg-[var(--clinical-surface-insights)] p-6 lg:grid-cols-3">
               {columnGroups.map((groups, colIndex) => (
                 <div
                   key={colIndex}
