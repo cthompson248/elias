@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { DonorProfilePanel } from "./DonorProfilePanel";
 import { InterviewHeader } from "./InterviewHeader";
 import {
   groupBankByCategory,
@@ -91,63 +92,71 @@ export default function InterviewSelectionPage() {
     <div className="flex h-screen flex-col overflow-hidden bg-[var(--clinical-surface)] text-[var(--clinical-on-surface)]">
       <InterviewHeader activeNav="profile" />
 
-      <div className="shrink-0 border-b border-[var(--clinical-outline)] bg-white px-6 py-3">
-        <div className="flex flex-wrap items-center gap-3">
-          <input
-            type="search"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search code or question…"
-            className="min-w-[200px] flex-1 rounded-lg border border-[var(--clinical-outline)] px-3 py-2 text-sm outline-none focus:border-[var(--clinical-primary)] focus:ring-2 focus:ring-[var(--clinical-primary)]/20"
-          />
-          <ActionButton onClick={selectAllTabletYes}>
-            All tablet Yes ({tabletYesIds.size})
-          </ActionButton>
-          <ActionButton onClick={selectVisible}>Select visible</ActionButton>
-          <ActionButton onClick={clearSelection} variant="muted">
-            Clear
-          </ActionButton>
-          <p className="w-full text-xs text-[var(--clinical-on-surface-variant)] lg:hidden">
-            Prototype: mock tablet Yes responses until digital questionnaire API is connected.
-          </p>
-        </div>
-      </div>
+      <div className="grid min-h-0 flex-1 grid-cols-4 overflow-hidden">
+        <aside className="col-span-1 min-h-0 overflow-y-auto border-r border-[var(--clinical-outline)] bg-[var(--clinical-surface)]">
+          <DonorProfilePanel />
+        </aside>
 
-      {visibleCount === 0 ? (
-        <p className="flex flex-1 items-center justify-center text-sm text-[var(--clinical-on-surface-variant)]">
-          No questions match your search.
-        </p>
-      ) : (
-        <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-hidden p-4 lg:grid-cols-3">
-          {columnGroups.map((groups, colIndex) => (
-            <div
-              key={colIndex}
-              className="flex min-h-0 flex-col gap-3 overflow-y-auto lg:overflow-hidden"
-            >
-              {groups.map((group) => (
-                <section
-                  key={group.category}
-                  className="shrink-0 rounded-lg border border-[var(--clinical-outline)] bg-white lg:min-h-0 lg:flex-1 lg:overflow-hidden lg:flex lg:flex-col"
+        <div className="col-span-3 flex min-h-0 flex-col overflow-hidden">
+          <div className="shrink-0 border-b border-[var(--clinical-outline)] bg-white px-6 py-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <input
+                type="search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search code or question…"
+                className="min-w-[200px] flex-1 rounded-lg border border-[var(--clinical-outline)] px-3 py-2 text-sm outline-none focus:border-[var(--clinical-primary)] focus:ring-2 focus:ring-[var(--clinical-primary)]/20"
+              />
+              <ActionButton onClick={selectAllTabletYes}>
+                All tablet Yes ({tabletYesIds.size})
+              </ActionButton>
+              <ActionButton onClick={selectVisible}>Select visible</ActionButton>
+              <ActionButton onClick={clearSelection} variant="muted">
+                Clear
+              </ActionButton>
+              <p className="w-full text-xs text-[var(--clinical-on-surface-variant)] lg:hidden">
+                Prototype: mock tablet Yes responses until digital questionnaire API is connected.
+              </p>
+            </div>
+          </div>
+
+          {visibleCount === 0 ? (
+            <p className="flex flex-1 items-center justify-center text-sm text-[var(--clinical-on-surface-variant)]">
+              No questions match your search.
+            </p>
+          ) : (
+            <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-hidden p-6 lg:grid-cols-3">
+              {columnGroups.map((groups, colIndex) => (
+                <div
+                  key={colIndex}
+                  className="flex min-h-0 flex-col gap-4 overflow-y-auto lg:overflow-hidden"
                 >
-                  <h2 className="shrink-0 border-b border-[var(--clinical-outline)] bg-[var(--clinical-surface)] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--clinical-on-surface-variant)]">
-                    {group.category}
-                  </h2>
-                  <ul className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
-                    {group.questions.map((q) => (
-                      <SelectionRow
-                        key={q.id}
-                        question={q}
-                        selected={selectedIds.has(q.id)}
-                        onToggle={() => toggle(q.id)}
-                      />
-                    ))}
-                  </ul>
-                </section>
+                  {groups.map((group) => (
+                    <section
+                      key={group.category}
+                      className="shrink-0 rounded-xl border border-[var(--clinical-outline)] bg-white lg:min-h-0 lg:flex-1 lg:overflow-hidden lg:flex lg:flex-col"
+                    >
+                      <h2 className="shrink-0 border-b border-[var(--clinical-outline)] bg-[var(--clinical-surface)] px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-[var(--clinical-on-surface-variant)]">
+                        {group.category}
+                      </h2>
+                      <ul className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
+                        {group.questions.map((q) => (
+                          <SelectionRow
+                            key={q.id}
+                            question={q}
+                            selected={selectedIds.has(q.id)}
+                            onToggle={() => toggle(q.id)}
+                          />
+                        ))}
+                      </ul>
+                    </section>
+                  ))}
+                </div>
               ))}
             </div>
-          ))}
+          )}
         </div>
-      )}
+      </div>
 
       <footer className="flex shrink-0 items-center justify-between gap-4 border-t border-[var(--clinical-outline)] bg-white px-6 py-3">
         <p className="text-sm text-[var(--clinical-on-surface-variant)]">
@@ -196,7 +205,7 @@ function SelectionRow({
   return (
     <li className="border-b border-[var(--clinical-outline)] last:border-b-0">
       <label
-        className={`flex cursor-pointer items-center gap-2 px-2 py-1.5 transition-colors hover:bg-[var(--clinical-surface)] ${
+        className={`flex cursor-pointer items-start gap-3 px-4 py-2.5 transition-colors hover:bg-[var(--clinical-surface)] ${
           selected ? "bg-[var(--clinical-primary-container)]/60" : ""
         }`}
       >
@@ -204,13 +213,13 @@ function SelectionRow({
           type="checkbox"
           checked={selected}
           onChange={onToggle}
-          className="h-3.5 w-3.5 shrink-0 rounded accent-[var(--clinical-primary)]"
+          className="mt-0.5 h-4 w-4 shrink-0 rounded accent-[var(--clinical-primary)]"
         />
-        <span className="w-[4.25rem] shrink-0 font-mono text-[11px] font-bold text-[var(--clinical-primary)]">
+        <span className="w-[4.5rem] shrink-0 font-mono text-xs font-bold tracking-wide text-[var(--clinical-primary)]">
           {question.code}
         </span>
         <span
-          className="min-w-0 flex-1 truncate text-xs text-[var(--clinical-on-surface)]"
+          className="line-clamp-2 min-w-0 flex-1 text-sm font-medium leading-snug text-[var(--clinical-on-surface)]"
           title={question.question}
         >
           {question.question}

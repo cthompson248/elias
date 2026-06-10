@@ -36,7 +36,7 @@ export function InterviewHeader({
         </div>
         <div className="min-w-0 leading-tight">
           <p className="font-[family-name:var(--font-public-sans)] text-base font-semibold">
-            {donor.name}
+            {donor.name} ({donor.profile.age})
           </p>
           <p className="text-sm text-[var(--clinical-on-surface-variant)]">
             ID: {donor.donorId} · Type: {donor.bloodType}
@@ -60,6 +60,17 @@ export function InterviewHeader({
       </div>
 
       <nav className="flex items-center justify-center gap-6">
+        {activeNav === "profile" ? (
+          <span className={navItemClassName(true)}>
+            Profile
+            <NavUnderline />
+          </span>
+        ) : (
+          <Link href="/interview" className={navItemClassName(false)}>
+            Profile
+          </Link>
+        )}
+
         {TAB_NAV.map((tab) => {
           const active = activeNav === tab.id;
           const className = navItemClassName(active);
@@ -94,17 +105,6 @@ export function InterviewHeader({
             </span>
           );
         })}
-
-        {activeNav === "profile" ? (
-          <span className={navItemClassName(true)}>
-            Profile
-            <NavUnderline />
-          </span>
-        ) : (
-          <Link href="/interview" className={navItemClassName(false)}>
-            Profile
-          </Link>
-        )}
       </nav>
 
       <div className="flex items-center justify-end gap-3">

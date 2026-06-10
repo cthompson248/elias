@@ -63,18 +63,51 @@ export interface InterviewQuestion {
   wiDirection?: string;
 }
 
+export type DonorSex = "male" | "female";
+
+export type DonationType = "whole-blood" | "apheresis" | "plasma" | "platelets";
+
+export interface DonorProfileDetails {
+  donorNumber: string;
+  sex: DonorSex | "";
+  donationType: DonationType | "";
+  heightCm: string;
+  weightKg: string;
+  dateOfBirth: string;
+  age: number;
+  aboGroup: string;
+}
+
 export interface Donor {
   name: string;
   donorId: string;
   bloodType: string;
   lastDonation: string;
+  profile: DonorProfileDetails;
 }
+
+export const donationTypeOptions: { id: DonationType; label: string }[] = [
+  { id: "whole-blood", label: "Whole Blood" },
+  { id: "apheresis", label: "Apheresis" },
+  { id: "plasma", label: "Plasma" },
+  { id: "platelets", label: "Platelets" },
+];
 
 export const donor: Donor = {
   name: "Marcus Thorne",
   donorId: "8823-A",
   bloodType: "O-Neg",
   lastDonation: "4 months ago",
+  profile: {
+    donorNumber: "8823-A",
+    sex: "male",
+    donationType: "",
+    heightCm: "182",
+    weightKg: "85",
+    dateOfBirth: "14/03/1985",
+    age: 41,
+    aboGroup: "O NEG",
+  },
 };
 
 /** @deprecated Use filterChecklistQuestions with full bank + review queue ids */
