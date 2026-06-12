@@ -31,6 +31,8 @@
   --clinical-warning-subtle-border: #f4daa6;
   --clinical-read-aloud: #d3f4ea;
   --clinical-read-aloud-border: #a8e6d4;
+  --clinical-success-subtle: #f3faef;
+  --clinical-success-subtle-border: #c9e1bd;
 }
 
 @theme inline {
